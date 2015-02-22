@@ -48,7 +48,7 @@ namespace DrRobot.JaguarControl
         private double diffEncoderPulseL, diffEncoderPulseR;
         private double maxVelocity = 0.25;
         private double Kpho = 1;
-        private double Kalpha = 2;//8
+        private double Kalpha = 2;//2//8
         private double Kbeta = -0.5;//-0.5//-1.0;
         const double alphaTrackingAccuracy = 0.10;
         const double betaTrackingAccuracy = 0.1;
@@ -500,6 +500,88 @@ namespace DrRobot.JaguarControl
             // motorSignalL. Make sure the robot does not exceed 
             // maxVelocity!!!!!!!!!!!!
 
+            // Part 1: Transform to new coordinate system
+
+            double deltaX = desiredX - x_est;
+            double deltaY = desiredY - y_est;
+            double theta = t_est - 0; // theta is the current heading relative to 0
+
+            double pho = Math.Sqrt(Math.Pow(deltaX, 2) + Math.Pow(deltaY, 2));
+
+            double alpha = - theta + Math.Atan2(deltaY, deltaX);
+            double direction = 1; // default is forward motion
+
+            // Correct alpha for forward vs backward motion
+            /*
+            if (deltaX >= 0 && deltaY >= 0) // Case: upper right quadrant
+            {
+                alpha = -theta + Math.Atan2(deltaY, deltaX);
+                direction = 1; // default is forward motion
+                Console.WriteLine("Upper Right quadrant");
+            }
+            else if (deltaX < 0 && deltaY > 0)  // Case: upper left quadrant
+            {
+                alpha = - theta + Math.Atan2(deltaY, -deltaX);
+                direction = -1;
+                Console.WriteLine("Upper Left quadrant");
+            }
+            else if (deltaX < 0 && deltaY < 0)  // Case: lower left quadrant
+            {
+               alpha = -theta + Math.Atan2(-deltaY, -deltaX);
+               direction = -1; // in case of backward motion
+               Console.WriteLine("Lower Left quadrant");
+            }
+            else if (deltaX > 0 && deltaY < 0) // Case: lower right quadrant
+            {
+                alpha = theta - Math.Atan2(-deltaY, deltaX);
+                direction = 1; // in case of backward motion
+                Console.WriteLine("Lower Right quadrant");
+            }
+            */
+
+            // Keep alpha within -pi and pi
+            if (alpha >= Math.PI) // if angle is over pi
+            {
+                alpha = (alpha % Math.PI) - Math.PI; //roll over to -pi to 0 range
+            }
+            if (alpha <= -Math.PI) // if angle is less than pi
+            {
+                alpha = (alpha % Math.PI) + Math.PI; //roll over to 0 to pi range
+            }
+
+            if ((-Math.PI / 2) < alpha && alpha < (Math.PI / 2))
+            {
+                alpha = -theta + Math.Atan2(deltaY, deltaX);
+                direction = 1; // default is forward motion
+                Console.WriteLine("Forward motion.");
+            }
+            else
+            {
+                alpha = -theta + Math.Atan2(-deltaY, -deltaX);
+                direction = -1; // in case of backward motion
+                Console.WriteLine("Backward motion.");
+            }
+
+            double beta = - theta - alpha;
+
+
+            // Part 2: Calculate Desired Wheel Velocities
+
+            // will experiment with Kphi, Kalpha, and Kbeta
+            double desiredV = direction * Kpho * pho; // correct for forward vs backward motion
+            double desiredW = Kalpha * alpha + Kbeta * beta;
+
+            desiredRotRateL = (short) ((pulsesPerRotation / (2*Math.PI*wheelRadius) * (desiredV + desiredW*robotRadius)) / 2);
+            desiredRotRateR = (short)((pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV - desiredW * robotRadius)) / 2);
+
+            Console.WriteLine("Theta: " + theta);
+            Console.WriteLine("deltax: " + deltaX + "deltay: " + deltaY);
+            Console.WriteLine("Alpha: " + alpha);
+            Console.WriteLine("Beta: " + beta);
+            Console.WriteLine("Desired v: " + desiredV);
+            Console.WriteLine("Desired w: " + desiredW);
+            Console.WriteLine("Right: " + desiredRotRateL);
+            Console.WriteLine("Left: " + desiredRotRateR);
 
             // ****************** Additional Student Code: End   ************
         }
@@ -539,9 +621,69 @@ namespace DrRobot.JaguarControl
             // You can set and use variables like diffEncoder1, currentEncoderPulse1,
             // wheelDistanceL, wheelRadius, encoderResolution etc. These are defined
             // in the Robot.h file.
- 
 
-            
+            /// Code from Lab 2
+
+            // Difference in encoder values for each wheel
+            double diffEncoderL = currentEncoderPulseL - lastEncoderPulseL;
+            double diffEncoderR = -currentEncoderPulseR + lastEncoderPulseR;
+
+            // The encoder has a range of 0 to encoderMax (32763)
+            double encoderDiffMax = encoderMax / 2; // Max value for difference in encoder values
+
+            // Accounting for encoder rollover and detecting backward vs forward motion:
+
+            if (diffEncoderL > encoderDiffMax) //Difference is too positive 
+            {
+                diffEncoderL = diffEncoderL - encoderMax;
+            }
+            else if (diffEncoderL < -encoderDiffMax) //Difference is too negative
+            {
+                diffEncoderL = diffEncoderL + encoderMax;
+            }
+
+            if (diffEncoderR > encoderDiffMax) //Difference is too positive
+            {
+                diffEncoderR = diffEncoderR - encoderMax;
+            }
+            else if (diffEncoderR < -encoderDiffMax) //Differnce is too negative
+            {
+                diffEncoderR = diffEncoderR + encoderMax;
+            }
+
+            // encoderResolution is 190 counts/rev
+            double encoderResolution = pulsesPerRotation;
+
+            // Distance traveled by each wheel (since the encoders have 190 counts/rev)
+            wheelDistanceL = 2 * Math.PI * wheelRadius * (diffEncoderL / encoderResolution);
+            wheelDistanceR = 2 * Math.PI * wheelRadius * (diffEncoderR / encoderResolution);
+
+            // Average distance traveled by each wheel to get distance traveled by robot
+            distanceTravelled = (wheelDistanceL + wheelDistanceR) / 2;
+
+            // Angle traveled is difference in distances traveled by each wheel / 2*L
+            // Angle traveled should be within -pi and pi
+            angleTravelled = (wheelDistanceL - wheelDistanceR) / (2 * robotRadius);
+
+            // Calculate estimated states x_est, y_est, t_test
+            x_est = x + distanceTravelled * Math.Cos(t + angleTravelled / 2);
+            y_est = y + distanceTravelled * Math.Sin(t + angleTravelled / 2);
+            t_est = t + angleTravelled;
+
+            // Keep angle of robot within -pi and pi
+            if (t_est >= Math.PI) // if angle is over pi
+            {
+                t_est = (t_est % Math.PI) - Math.PI; //roll over to -pi to 0 range
+            }
+            if (t_est <= -Math.PI) // if angle is less than pi
+            {
+                t_est = (t_est % Math.PI) + Math.PI; //roll over to 0 to pi range
+            }
+
+            // Update last encoder count variables
+            lastEncoderPulseL = currentEncoderPulseL;
+            lastEncoderPulseR = currentEncoderPulseR;
+    
 
             // ****************** Additional Student Code: End   ************
         }
@@ -559,7 +701,9 @@ namespace DrRobot.JaguarControl
             // (i.e. using last x, y, t as well as angleTravelled and distanceTravelled).
             // Make sure t stays between pi and -pi
 
-
+            x = x_est;
+            y = y_est;
+            t = t_est;
 
             // ****************** Additional Student Code: End   ************
         }
