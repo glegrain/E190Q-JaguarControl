@@ -506,64 +506,42 @@ namespace DrRobot.JaguarControl
             double deltaY = desiredY - y_est;
             double theta = t_est - 0; // theta is the current heading relative to 0
 
-            double pho = Math.Sqrt(Math.Pow(deltaX, 2) + Math.Pow(deltaY, 2));
+            // clean deltaX and deltaY to remove oscillations
+            // yhis will ignore the delta overshoot between two function call
+            deltaX = (Math.Abs(deltaX) < 0.001) ? 0 : deltaX;
+            deltaY = (Math.Abs(deltaY) < 0.001) ? 0 : deltaY;
 
+            double pho = Math.Sqrt(Math.Pow(deltaX, 2) + Math.Pow(deltaY, 2));
             double alpha = - theta + Math.Atan2(deltaY, deltaX);
             double direction = 1; // default is forward motion
 
-            // Correct alpha for forward vs backward motion
-            /*
-            if (deltaX >= 0 && deltaY >= 0) // Case: upper right quadrant
-            {
-                alpha = -theta + Math.Atan2(deltaY, deltaX);
-                direction = 1; // default is forward motion
-                Console.WriteLine("Upper Right quadrant");
-            }
-            else if (deltaX < 0 && deltaY > 0)  // Case: upper left quadrant
-            {
-                alpha = - theta + Math.Atan2(deltaY, -deltaX);
-                direction = -1;
-                Console.WriteLine("Upper Left quadrant");
-            }
-            else if (deltaX < 0 && deltaY < 0)  // Case: lower left quadrant
-            {
-               alpha = -theta + Math.Atan2(-deltaY, -deltaX);
-               direction = -1; // in case of backward motion
-               Console.WriteLine("Lower Left quadrant");
-            }
-            else if (deltaX > 0 && deltaY < 0) // Case: lower right quadrant
-            {
-                alpha = theta - Math.Atan2(-deltaY, deltaX);
-                direction = 1; // in case of backward motion
-                Console.WriteLine("Lower Right quadrant");
-            }
-            */
-
-            // Keep alpha within -pi and pi
+            // theta is within ]-pi,pi[
+            // target set of Atan2 is [-pi,pi]
+            // => target set of alpha is ]-2pi,2pi[. We have to keep alpha in ]pi,pi[
             if (alpha >= Math.PI) // if angle is over pi
             {
-                alpha = (alpha % Math.PI) - Math.PI; //roll over to -pi to 0 range
+                alpha = (t_est % Math.PI) - Math.PI; //roll over to -pi to 0 range
             }
             if (alpha <= -Math.PI) // if angle is less than pi
             {
-                alpha = (alpha % Math.PI) + Math.PI; //roll over to 0 to pi range
+                alpha = (t_est % Math.PI) + Math.PI; //roll over to 0 to pi range
             }
 
-            if ((-Math.PI / 2) < alpha && alpha < (Math.PI / 2))
+            // if alpha in [-pi/2, pi/2] move forward with default alpha calculation
+            if ((-Math.PI / 2) <= alpha && alpha <= (Math.PI / 2))
             {
                 alpha = -theta + Math.Atan2(deltaY, deltaX);
                 direction = 1; // default is forward motion
-                Console.WriteLine("Forward motion.");
             }
-            else
+            else  // else, alpha in ]-pi,-pi/2[ U ]pi/2,pi[
             {
                 alpha = -theta + Math.Atan2(-deltaY, -deltaX);
                 direction = -1; // in case of backward motion
-                Console.WriteLine("Backward motion.");
             }
 
+            // angle to move at goal
             double beta = - theta - alpha;
-
+            beta  = beta + desiredT;
 
             // Part 2: Calculate Desired Wheel Velocities
 
@@ -571,17 +549,42 @@ namespace DrRobot.JaguarControl
             double desiredV = direction * Kpho * pho; // correct for forward vs backward motion
             double desiredW = Kalpha * alpha + Kbeta * beta;
 
-            desiredRotRateL = (short) ((pulsesPerRotation / (2*Math.PI*wheelRadius) * (desiredV + desiredW*robotRadius)) / 2);
-            desiredRotRateR = (short)((pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV - desiredW * robotRadius)) / 2);
+            desiredRotRateL = (short) (pulsesPerRotation / (2*Math.PI*wheelRadius) * (desiredV + desiredW*robotRadius)); // enc. pulses / sec
+            desiredRotRateR = (short) (pulsesPerRotation / (2*Math.PI*wheelRadius) * (desiredV - desiredW*robotRadius)); // enc. pulses / sec
 
-            Console.WriteLine("Theta: " + theta);
-            Console.WriteLine("deltax: " + deltaX + "deltay: " + deltaY);
-            Console.WriteLine("Alpha: " + alpha);
-            Console.WriteLine("Beta: " + beta);
+            // Limit wheel velocities to maxVelocity (0.25 m/s)
+            short maxRotRate = (short)(maxVelocity * pulsesPerRotation / (2 * Math.PI * wheelRadius)); // 0.25 * 190/(2pi * 0.089) = 84 enc. pulses / sec
+            int rotDirL = (desiredRotRateL >= 0 )? 1 : -1;
+            int rotDirR = (desiredRotRateR >= 0 )? 1 : -1;
+            double rotRatio = Math.Abs(desiredRotRateL / (double)desiredRotRateR);
+            if (Math.Abs(desiredRotRateR) > maxRotRate || Math.Abs(desiredRotRateL) > maxRotRate)
+            {
+                if (rotRatio > 1)
+                {
+                    desiredRotRateL = (short)(rotDirL * maxRotRate);
+                    desiredRotRateR = (short)(rotDirR * maxRotRate / rotRatio);
+                }
+                else
+                {
+                    desiredRotRateR = (short)(rotDirR * maxRotRate);
+                    desiredRotRateL = (short)(rotDirL * maxRotRate * rotRatio);
+                }
+            }
+
+
+
+            //desiredRotRateL = (desiredRotRateL < 1) ? (short) 0 : desiredRotRateL;
+            //desiredRotRateR = (desiredRotRateR < 1) ? (short) 0 : desiredRotRateR;
+
+            Console.WriteLine("theta: " + theta);
+            Console.WriteLine("deltaX: " + deltaX + " deltaY: " + deltaY);
+            Console.WriteLine("alpha: " + alpha);
+            Console.WriteLine("beta: " + beta);
             Console.WriteLine("Desired v: " + desiredV);
             Console.WriteLine("Desired w: " + desiredW);
-            Console.WriteLine("Right: " + desiredRotRateL);
-            Console.WriteLine("Left: " + desiredRotRateR);
+            Console.WriteLine("desiredRotRateL: " + desiredRotRateL);
+            Console.WriteLine("desiredRotRateR: " + desiredRotRateR);
+            Console.WriteLine("");
 
             // ****************** Additional Student Code: End   ************
         }
