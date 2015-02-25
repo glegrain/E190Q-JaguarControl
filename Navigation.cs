@@ -49,7 +49,7 @@ namespace DrRobot.JaguarControl
         private double maxVelocity = 0.25;
         private double Kpho = 1;
         private double Kalpha = 2;//2//8
-        private double Kbeta = -0.5;//-0.5//-1.0;
+        private double Kbeta = -1;//-0.5//-1.0;
         const double alphaTrackingAccuracy = 0.10;
         const double betaTrackingAccuracy = 0.1;
         const double phoTrackingAccuracy = 0.10;
@@ -549,13 +549,17 @@ namespace DrRobot.JaguarControl
             double desiredV = direction * Kpho * pho; // correct for forward vs backward motion
             double desiredW = Kalpha * alpha + Kbeta * beta;
 
+            // fix for in-place rotation
+            //if (Math.Abs(Math.Abs(theta) - Math.Abs(alpha)) < 0.1) desiredW = -Kbeta/2.5 * desiredT; // Kbeta < 0
+            if (pho < 0.1) desiredW = -0.3 * angleDifference(theta, desiredT); // experiental coef
+
             desiredRotRateL = (short) (pulsesPerRotation / (2*Math.PI*wheelRadius) * (desiredV + desiredW*robotRadius)); // enc. pulses / sec
             desiredRotRateR = (short) (pulsesPerRotation / (2*Math.PI*wheelRadius) * (desiredV - desiredW*robotRadius)); // enc. pulses / sec
 
             // Limit wheel velocities to maxVelocity (0.25 m/s)
             short maxRotRate = (short)(maxVelocity * pulsesPerRotation / (2 * Math.PI * wheelRadius)); // 0.25 * 190/(2pi * 0.089) = 84 enc. pulses / sec
-            int rotDirL = (desiredRotRateL >= 0 )? 1 : -1;
-            int rotDirR = (desiredRotRateR >= 0 )? 1 : -1;
+            int rotDirL = (desiredRotRateL >= 0) ? 1 : -1;
+            int rotDirR = (desiredRotRateR >= 0) ? 1 : -1;
             double rotRatio = Math.Abs(desiredRotRateL / (double)desiredRotRateR);
             if (Math.Abs(desiredRotRateR) > maxRotRate || Math.Abs(desiredRotRateL) > maxRotRate)
             {
@@ -571,22 +575,37 @@ namespace DrRobot.JaguarControl
                 }
             }
 
+            //fix for oscillations when arrived at destination
+            if (pho < 0.1 && Math.Abs(angleDifference(theta, desiredT)) < 0.02)
+            {
+                //desiredRotRateL = (desiredRotRateL < 1) ? (short) 0 : desiredRotRateL;
+                //desiredRotRateR = (desiredRotRateR < 1) ? (short) 0 : desiredRotRateR;
+                desiredRotRateL = (short) 0;
+                desiredRotRateR = (short) 0;
+            }
 
-
-            //desiredRotRateL = (desiredRotRateL < 1) ? (short) 0 : desiredRotRateL;
-            //desiredRotRateR = (desiredRotRateR < 1) ? (short) 0 : desiredRotRateR;
-
-            Console.WriteLine("theta: " + theta);
-            Console.WriteLine("deltaX: " + deltaX + " deltaY: " + deltaY);
-            Console.WriteLine("alpha: " + alpha);
-            Console.WriteLine("beta: " + beta);
-            Console.WriteLine("Desired v: " + desiredV);
-            Console.WriteLine("Desired w: " + desiredW);
-            Console.WriteLine("desiredRotRateL: " + desiredRotRateL);
-            Console.WriteLine("desiredRotRateR: " + desiredRotRateR);
-            Console.WriteLine("");
+            //Console.WriteLine("theta: " + theta);
+            //Console.WriteLine("deltaX: " + deltaX + " deltaY: " + deltaY);
+            //Console.WriteLine("alpha: " + alpha);
+            //Console.WriteLine("beta: " + beta);
+            //Console.WriteLine("Desired v: " + desiredV);
+            //Console.WriteLine("Desired w: " + desiredW);
+            //Console.WriteLine("desiredRotRateL: " + desiredRotRateL);
+            //Console.WriteLine("desiredRotRateR: " + desiredRotRateR);
+            //Console.WriteLine("");
 
             // ****************** Additional Student Code: End   ************
+        }
+
+        // get the shortest angle difference in radians
+        private double angleDifference(double source, double target)
+        {
+            double diff = (source - target) % (2*Math.PI);
+            if (diff > Math.PI)
+                diff = diff - Math.PI;
+            else if (diff < -Math.PI)
+                diff = diff + Math.PI;
+            return diff;
         }
 
 
