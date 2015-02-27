@@ -432,7 +432,7 @@ namespace DrRobot.JaguarControl
             //int fileCnt= 0;
             String date = DateTime.Now.Year.ToString() + "-" + DateTime.Now.Month.ToString() + "-" + DateTime.Now.Day.ToString() + "-" + DateTime.Now.Minute.ToString();
             ToString();
-            logFile = File.CreateText("JaguarData_" + date + ".txt");
+            logFile = File.CreateText("JaguarData_" + date + ".csv");
             startTime = DateTime.Now;
             loggingOn = true;
         }
@@ -455,7 +455,7 @@ namespace DrRobot.JaguarControl
             {
                 TimeSpan ts = DateTime.Now - startTime;
                 time = ts.TotalSeconds;
-                 String newData = time.ToString() + " " + x.ToString() + " " + y.ToString() + " " + t.ToString() ;
+                 String newData = time.ToString() + ", " + x.ToString() + ", " + y.ToString() + ", " + t.ToString() ;
 
                 logFile.WriteLine(newData);
             }
@@ -607,7 +607,6 @@ namespace DrRobot.JaguarControl
                 diff = diff + Math.PI;
             return diff;
         }
-
 
 
         // THis function is called to follow a trajectory constructed by PRMMotionPlanner()
