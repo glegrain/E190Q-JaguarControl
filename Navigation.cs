@@ -517,13 +517,95 @@ namespace DrRobot.JaguarControl
             // desoredRotRateL. Make sure the robot does not exceed 
             // maxVelocity!!!!!!!!!!!!
 
-                desiredRotRateR = 0;
-                desiredRotRateL = 0;
+            // Part 1: Transform to new coordinate system
+
+            double deltaX = desiredX - x_est;
+            double deltaY = desiredY - y_est;
+            double theta = t_est - 0; // theta is the current heading relative to 0
+
+            // clean deltaX and deltaY to remove oscillations
+            // yhis will ignore the delta overshoot between two function call
+            deltaX = (Math.Abs(deltaX) < 0.001) ? 0 : deltaX;
+            deltaY = (Math.Abs(deltaY) < 0.001) ? 0 : deltaY;
+
+            double pho = Math.Sqrt(Math.Pow(deltaX, 2) + Math.Pow(deltaY, 2));
+            double alpha = -theta + Math.Atan2(deltaY, deltaX);
+            //double alpha = angleDifference(-theta, -Math.Atan2(deltaX, deltaY));
+            double direction = 1; // default is forward motion
+
+            // if alpha in [-pi/2, pi/2] move forward with default alpha calculation
+            if ((-Math.PI / 2) <= alpha && alpha <= (Math.PI / 2))
+            {
+                alpha = -angleDifference(theta, Math.Atan2(deltaY, deltaX));
+                direction = 1;
+            }
+            else // else, alpha in ]-pi, pi/2[ U ]pi/2, pi[
+            {
+                alpha = -angleDifference(theta, Math.Atan2(-deltaY, -deltaX));
+                direction = -1;
+            }
+
+
+            // angle to move at goal
+            double beta = angleDifference(-theta, alpha);
+            beta = angleDifference(beta, -desiredT);
+
+            // Part 2: Calculate Desired Wheel Velocities
+
+            // will experiment with Kphi, Kalpha, and Kbeta
+            double desiredV = direction * Kpho * pho; // correct for forward vs backward motion
+            double desiredW = Kalpha * alpha + Kbeta * beta;
+
+            // fix for in-place rotation
+            //if (Math.Abs(Math.Abs(theta) - Math.Abs(alpha)) < 0.1) desiredW = -Kbeta/2.5 * desiredT; // Kbeta < 0
+            if (pho < 0.1) desiredW = -2 * angleDifference(theta, desiredT); // experiental coef
+
+            desiredRotRateL = (short)(pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV + desiredW * robotRadius)); // enc. pulses / sec
+            desiredRotRateR = (short)(pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV - desiredW * robotRadius)); // enc. pulses / sec
+
+            // Limit wheel velocities to maxVelocity (0.25 m/s)
+            short maxRotRate = (short)(3 * maxVelocity * pulsesPerRotation / (2 * Math.PI * wheelRadius)); // 0.25 * 190/(2pi * 0.089) = 84 enc. pulses / sec
+            int rotDirL = (desiredRotRateL >= 0) ? 1 : -1;
+            int rotDirR = (desiredRotRateR >= 0) ? 1 : -1;
+            double rotRatio = Math.Abs(desiredRotRateL / (double)desiredRotRateR);
+            if (Math.Abs(desiredRotRateR) > maxRotRate || Math.Abs(desiredRotRateL) > maxRotRate)
+            {
+                if (rotRatio > 1)
+                {
+                    desiredRotRateL = (short)(rotDirL * maxRotRate);
+                    desiredRotRateR = (short)(rotDirR * maxRotRate / rotRatio);
+                }
+                else
+                {
+                    desiredRotRateR = (short)(rotDirR * maxRotRate);
+                    desiredRotRateL = (short)(rotDirL * maxRotRate * rotRatio);
+                }
+            }
+
+            //fix for oscillations when arrived at destination
+            if (pho < 0.1 && Math.Abs(angleDifference(theta, desiredT)) < 0.02)
+            {
+                //desiredRotRateL = (desiredRotRateL < 1) ? (short) 0 : desiredRotRateL;
+                //desiredRotRateR = (desiredRotRateR < 1) ? (short) 0 : desiredRotRateR;
+                desiredRotRateL = (short)0;
+                desiredRotRateR = (short)0;
+            }
 
             // ****************** Additional Student Code: End   ************
         }
 
 
+
+        // get the shortest angle difference in radians
+        private double angleDifference(double source, double target)
+        {
+            double diff = (source - target) % (2 * Math.PI);
+            if (diff > Math.PI)
+                diff = diff - 2 * Math.PI;
+            else if (diff < -Math.PI)
+                diff = diff + 2 * Math.PI;
+            return diff;
+        }
 
         // THis function is called to follow a trajectory constructed by PRMMotionPlanner()
         private void TrackTrajectory()
@@ -590,8 +672,8 @@ namespace DrRobot.JaguarControl
 
             // pulsesPerRotation is encoder resolution of 190 counts/rev
             // Distance traveled by each wheel (since the encoders have 190 counts/rev)
-            wheelDistanceL = 2 * Math.PI * wheelRadius * (diffEncoderPulseL / (double)pulsesPerRotation);
-            wheelDistanceR = 2 * Math.PI * wheelRadius * (diffEncoderPulseR / (double)pulsesPerRotation);
+            wheelDistanceL = 2 * Math.PI * wheelRadius * (diffEncoderPulseL / (double) pulsesPerRotation);
+            wheelDistanceR = 2 * Math.PI * wheelRadius * (diffEncoderPulseR / (double) pulsesPerRotation);
 
             // Average distance traveled by each wheel to get distance traveled by robot
             distanceTravelled = (wheelDistanceL + wheelDistanceR) / 2;
@@ -617,7 +699,7 @@ namespace DrRobot.JaguarControl
 
             // Update last encoder count variables
             lastEncoderPulseL = currentEncoderPulseL;
-            lastEncoderPulseR = currentEncoderPulseR; 
+            lastEncoderPulseR = currentEncoderPulseR;
 
             // ****************** Additional Student Code: End   ************
         }
@@ -667,7 +749,150 @@ namespace DrRobot.JaguarControl
 
             // Put code here to calculate x_est, y_est, t_est using a PF
 
-            x_est = 0; y_est = 0; t_est = 0;
+            //x_est = 0; y_est = 0; t_est = 0; // This was in the base code. Why?
+            // Put code here to calculate x_est, y_est, t_est using a PF
+
+            x = x_est; y = y_est; t = t_est;
+
+            // Edited in Lab 4
+
+            double totalWeight = 0; // this is for the prediction step; sum of all particles' weights
+
+            /// Code from Lab 2: Odometry 
+
+            // Loop and propagate all particles
+            // QUESTION: DO WE ADD RANDOMNESS OR ASSUME RANDOMNESS AS WE PROPAGATE?
+
+            // Calculate stdev for each encoder value before looping through particles
+            double stdevL = 0.14 * wheelDistanceL;
+            double stdevR = 0.14 * wheelDistanceR;
+
+            // Don't try to localize if the robot is not moving
+            if (distanceTravelled == 0 || angleTravelled == 0) return;
+            
+            for (int i = 0; i < numParticles; ++i)
+            {
+                //PREDICTION STEP
+
+                // 1) Calculate estimated states x_est, y_est, t_test based on odometry
+
+                // Distance traveled by each wheel (since the encoders have 190 counts/rev)
+                double randDistanceL = wheelDistanceL + RandomGaussian(0, stdevL);
+                double randDistanceR = wheelDistanceR + RandomGaussian(0, stdevR);
+
+                // Average distance traveled by each wheel to get distance traveled by robot
+                double randDistanceTravelled = (randDistanceL + randDistanceR) / 2;
+
+                // Angle traveled is difference in distances traveled by each wheel / 2*L
+                // Angle traveled should be within -pi and pi
+                double randAngleTravelled = (randDistanceL - randDistanceR) / (2 * robotRadius);
+
+                propagatedParticles[i].x = particles[i].x + randDistanceTravelled * Math.Cos(t + angleTravelled / 2);
+                propagatedParticles[i].y = particles[i].y + randDistanceTravelled * Math.Sin(t + angleTravelled / 2);
+                propagatedParticles[i].t = particles[i].t + angleTravelled;
+
+                // 2) Calculate weight of particle
+                propagatedParticles[i].w = CalculateWeight(i);
+                totalWeight = totalWeight + propagatedParticles[i].w;
+
+                // 3) Update set of particles with propagated particles
+                particles[i] = propagatedParticles[i];
+
+            }
+
+            // CORRECTION STEP
+
+            // new array to hold temporary particles
+            // maximum size of tempParticles should be 4*numParticles
+            Particle[] tempParticles = new Particle[4 * numParticles];
+
+            // number of temporary particles
+            int numTempParticles = 0;
+
+            // Check that we have new measurements before resampling
+            //if (distanceTravelled == 0 && angleTravelled == 0) return;
+
+            // Resample particle using the approximate method
+            //if (distanceTravelled != 0 || angleTravelled != 0)
+            //{
+            for (int i = 0; i < numParticles; ++i)
+            {
+                // normalize weights so we can compare them on a range of 0 to 1.0
+                // set weight to 0 when the weight of all particles if 0
+                double weight = (totalWeight > 0) ? particles[i].w / totalWeight: 0;
+
+                if (weight < 0.25) // add 1 copy
+                {
+                    // add 1st copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                }
+                else if (weight < 0.5) // add 2 copy
+                {
+                    // add 1st copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                    // add 2nd copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                }
+                else if (weight < 0.75) // add 3 copy
+                {
+                    // add 1st copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                    // add 2nd copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                    // add 3rd copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                }
+                else if (weight < 1.0) // add 4 copies
+                {
+                    // add 1st copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                    // add 2nd copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                    // add 3rd copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                    // add 4th copy
+                    tempParticles[numTempParticles] = particles[i];
+                    ++numTempParticles;
+                }
+            }
+
+            // loop through the number of particles to resample from temporary particle list
+            for (int i = 0; i < numParticles; ++i)
+            {
+                // Note: fabiha is worried RandomGaussian() won't have enough resolution
+                // tried to make RandomGaussian() go from 0 to 1, instead of -2 to 2
+                // Guillaume wants to try with uniform
+                int r = random.Next(0, numTempParticles - 1);
+                particles[i] = tempParticles[r];
+            }
+            //}
+
+            double x_est_tot = 0;
+            double y_est_tot = 0;
+            double t_est_tot = 0;
+
+            // Sum all particle state values
+            for (int i = 0; i < numParticles; ++i)
+            {
+                x_est_tot = particles[i].x + x_est_tot;
+                y_est_tot = particles[i].y + y_est_tot;
+                t_est_tot = particles[i].t + t_est_tot;
+            }
+
+            // Average all particle state values to get x_est, y_est, and t_est
+            x_est = x_est_tot / numParticles;
+            y_est = y_est_tot / numParticles;
+            t_est = t_est_tot / numParticles;
+
 
 
             // ****************** Additional Student Code: End   ************
@@ -680,14 +905,26 @@ namespace DrRobot.JaguarControl
         // with the particle.
         // This function should calculate the weight associated with particle p.
 
-        void CalculateWeight(int p)
+        double CalculateWeight(int p)
         {
-	        double weight = 0;
+	        // double weight = 0;
 
 	        // ****************** Additional Student Code: Start ************
 
 	        // Put code here to calculated weight. Feel free to use the
 	        // function map.GetClosestWallDistance from Map.cs.
+
+            // particleDist is the distance from the particle to the closest wall
+            double particleDist = map.GetClosestWallDistance(propagatedParticles[p].x, propagatedParticles[p].y, propagatedParticles[p].t);
+
+            // robotDist is the distance from the robot to the closest wall
+            double robotDist = LaserData[113] / 1000;
+
+            return GaussianFunction(particleDist, robotDist, 1 / (2 * Math.Pow(200, 2)));
+
+            //propagatedParticles[p].w = weight;
+
+            //return weight;
 
         }
 
@@ -729,8 +966,10 @@ namespace DrRobot.JaguarControl
             // particles[p]. Feel free to use the random.NextDouble() function. 
 	        // It might be helpful to use boundaries defined in the
 	        // Map.cs file (e.g. map.minX)
-	        
 
+            particles[p].x = (random.Next((int)(numParticles * map.minX), (int)(numParticles * map.maxX))) / (double) numParticles;
+            particles[p].y = (random.Next((int)(numParticles * map.minY), (int)(numParticles * map.maxY))) / (double) numParticles;
+            particles[p].t = (random.Next((int)(numParticles * -1 * Math.PI), (int)(numParticles * 2 * Math.PI))) / numParticles;
 
 
             // ****************** Additional Student Code: End   ************
@@ -768,16 +1007,32 @@ namespace DrRobot.JaguarControl
 	        return gauss;
         }
 
+        // LAB 4 EDITED FUNCTION
+        // Random number generator with gaussian distribution and given mean & stdev
+        // Often random guassian numbers are used in particle filters. This
+        // function might help.
 
+        double RandomGaussian(double mean, double stdev)
+        {
+            return mean + stdev * RandomGaussian();
+        }
+
+        double GaussianFunction(double actual, double mean, double stdev)
+        {
+            //gauss = Math.Exp( - Math.Pow(actual - mean, 2) / (2 * Math.Pow(stdev, 2)));
+            //peak = 1/ (Math.Sqrt(2*Math.PI));
+            //gauss = guass / peak;
+            return Math.Exp(-Math.Pow(actual - mean, 2) / (2 * Math.Pow(stdev, 2))) / (Math.Sqrt(2 * Math.PI) * stdev);
+        }
 
         // Get the sign of a number
         double Sgn(double a)
         {
-	        if (a>0)
+            if (a > 0)
                 return 1.0;
-	        else if (a<0)
+            else if (a < 0)
                 return -1.0;
-	        else
+            else
                 return 0.0;
         }
 
