@@ -559,8 +559,65 @@ namespace DrRobot.JaguarControl
             // wheelDistanceL, wheelRadius, encoderResolution etc. These are defined
             // in the Robot.h file.
 
+            /// Code from Lab 2
 
-            
+            // Difference in encoder values for each wheel
+            diffEncoderPulseL = currentEncoderPulseL - lastEncoderPulseL;
+            diffEncoderPulseR = -currentEncoderPulseR + lastEncoderPulseR;
+
+            // The encoder has a range of 0 to encoderMax (32763)
+            double encoderDiffMax = encoderMax / 2; // Max value for difference in encoder values
+
+            // Accounting for encoder rollover and detecting backward vs forward motion:
+
+            if (diffEncoderPulseL > encoderDiffMax) //Difference is too positive 
+            {
+                diffEncoderPulseL = diffEncoderPulseL - encoderMax;
+            }
+            else if (diffEncoderPulseL < -encoderDiffMax) //Difference is too negative
+            {
+                diffEncoderPulseL = diffEncoderPulseL + encoderMax;
+            }
+
+            if (diffEncoderPulseR > encoderDiffMax) //Difference is too positive
+            {
+                diffEncoderPulseR = diffEncoderPulseR - encoderMax;
+            }
+            else if (diffEncoderPulseR < -encoderDiffMax) //Differnce is too negative
+            {
+                diffEncoderPulseR = diffEncoderPulseR + encoderMax;
+            }
+
+            // pulsesPerRotation is encoder resolution of 190 counts/rev
+            // Distance traveled by each wheel (since the encoders have 190 counts/rev)
+            wheelDistanceL = 2 * Math.PI * wheelRadius * (diffEncoderPulseL / (double)pulsesPerRotation);
+            wheelDistanceR = 2 * Math.PI * wheelRadius * (diffEncoderPulseR / (double)pulsesPerRotation);
+
+            // Average distance traveled by each wheel to get distance traveled by robot
+            distanceTravelled = (wheelDistanceL + wheelDistanceR) / 2;
+
+            // Angle traveled is difference in distances traveled by each wheel / 2*L
+            // Angle traveled should be within -pi and pi
+            angleTravelled = (wheelDistanceL - wheelDistanceR) / (2 * robotRadius);
+
+            // Calculate estimated states x_est, y_est, t_test
+            x_est = x + distanceTravelled * Math.Cos(t + angleTravelled / 2);
+            y_est = y + distanceTravelled * Math.Sin(t + angleTravelled / 2);
+            t_est = t + angleTravelled;
+
+            // Keep angle of robot within -pi and pi
+            if (t_est >= Math.PI) // if angle is over pi
+            {
+                t_est = (t_est % Math.PI) - Math.PI; //roll over to -pi to 0 range
+            }
+            if (t_est <= -Math.PI) // if angle is less than pi
+            {
+                t_est = (t_est % Math.PI) + Math.PI; //roll over to 0 to pi range
+            }
+
+            // Update last encoder count variables
+            lastEncoderPulseL = currentEncoderPulseL;
+            lastEncoderPulseR = currentEncoderPulseR; 
 
             // ****************** Additional Student Code: End   ************
         }
@@ -576,6 +633,11 @@ namespace DrRobot.JaguarControl
             // (i.e. using last x, y, t as well as angleTravelled and distanceTravelled).
             // Make sure t stays between pi and -pi
 
+            // Lab 2 Code
+
+            x = x_est;
+            y = y_est;
+            t = t_est;
 
             // ****************** Additional Student Code: End   ************
         }
