@@ -59,6 +59,7 @@ namespace DrRobot.JaguarControl
         private static Pen wallPen = new Pen(Brushes.LightGray, 4);
         private static Pen particlePen = new Pen(Brushes.Red, 1);
         private static Pen estimatePen = new Pen(Brushes.Blue, 2);
+        private static Pen laserPen = new Pen(Brushes.HoneyDew, 1); // created in Lab 4 to draw lines from particles to walls
         private static double cellWidth = 1.0; // in meters, mapResolution is in metersToPixels
         #endregion
 
@@ -311,6 +312,7 @@ namespace DrRobot.JaguarControl
                 for (int p = 0; p < navigation.numParticles; p++)
                 {
                     g.DrawPie(particlePen, (int)(xCenter -partHalfSize + mapResolution * navigation.particles[p].x), (int)(yCenter - partHalfSize - mapResolution * navigation.particles[p].y), partSize, partSize, (int)(-navigation.particles[p].t * 180 / 3.14 - 180 - 25), 50);
+                    //g.DrawLine(laserPen, (int)(mapResolution * navigation.particles[p].x),(int)(mapResolution * navigation.particles[p].y), 
                 }
 
 
