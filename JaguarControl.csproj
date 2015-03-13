@@ -103,6 +103,7 @@
     <Compile Include="LaserScan.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Map.cs" />
     <Compile Include="Navigation.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

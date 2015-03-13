@@ -82,7 +82,6 @@
             this.lblTemp4 = new System.Windows.Forms.Label();
             this.lblTemp2 = new System.Windows.Forms.Label();
             this.lblTemp1 = new System.Windows.Forms.Label();
-            this.btnSetMapCenter = new System.Windows.Forms.Button();
             this.tmrJoyStickPoll = new System.Windows.Forms.Timer(this.components);
             this.trackBarTurnPower = new System.Windows.Forms.TrackBar();
             this.trackBarForwardPower = new System.Windows.Forms.TrackBar();
@@ -109,6 +108,9 @@
             this.label16 = new System.Windows.Forms.Label();
             this.desiredT = new System.Windows.Forms.Label();
             this.txtStartTheta = new System.Windows.Forms.TextBox();
+            this.txtNumParticles = new System.Windows.Forms.TextBox();
+            this.label19 = new System.Windows.Forms.Label();
+            this.checkBoxKnownStart = new System.Windows.Forms.CheckBox();
             this.groupBoxGPSIMU.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.realJaguar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxIMUGPS)).BeginInit();
@@ -595,7 +597,7 @@
             // btnSetStartPoint
             // 
             this.btnSetStartPoint.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSetStartPoint.Location = new System.Drawing.Point(285, 424);
+            this.btnSetStartPoint.Location = new System.Drawing.Point(394, 426);
             this.btnSetStartPoint.Name = "btnSetStartPoint";
             this.btnSetStartPoint.Size = new System.Drawing.Size(90, 25);
             this.btnSetStartPoint.TabIndex = 25;
@@ -723,17 +725,6 @@
             this.lblTemp1.Text = "0";
             this.lblTemp1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // btnSetMapCenter
-            // 
-            this.btnSetMapCenter.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSetMapCenter.Location = new System.Drawing.Point(395, 424);
-            this.btnSetMapCenter.Name = "btnSetMapCenter";
-            this.btnSetMapCenter.Size = new System.Drawing.Size(90, 25);
-            this.btnSetMapCenter.TabIndex = 44;
-            this.btnSetMapCenter.Text = "SaveSetPoint";
-            this.btnSetMapCenter.UseVisualStyleBackColor = true;
-            this.btnSetMapCenter.Click += new System.EventHandler(this.btnSetMapCenter_Click);
-            // 
             // tmrJoyStickPoll
             // 
             this.tmrJoyStickPoll.Interval = 200;
@@ -829,7 +820,7 @@
             this.checkBoxMotorProtect.Checked = true;
             this.checkBoxMotorProtect.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxMotorProtect.ForeColor = System.Drawing.Color.Black;
-            this.checkBoxMotorProtect.Location = new System.Drawing.Point(638, 454);
+            this.checkBoxMotorProtect.Location = new System.Drawing.Point(638, 447);
             this.checkBoxMotorProtect.Name = "checkBoxMotorProtect";
             this.checkBoxMotorProtect.Size = new System.Drawing.Size(90, 17);
             this.checkBoxMotorProtect.TabIndex = 55;
@@ -841,7 +832,7 @@
             // 
             this.label5.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.Black;
-            this.label5.Location = new System.Drawing.Point(650, 475);
+            this.label5.Location = new System.Drawing.Point(650, 479);
             this.label5.Margin = new System.Windows.Forms.Padding(0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(76, 24);
@@ -851,7 +842,7 @@
             // 
             // pictureBoxStuckDetect
             // 
-            this.pictureBoxStuckDetect.Location = new System.Drawing.Point(638, 482);
+            this.pictureBoxStuckDetect.Location = new System.Drawing.Point(638, 486);
             this.pictureBoxStuckDetect.Name = "pictureBoxStuckDetect";
             this.pictureBoxStuckDetect.Size = new System.Drawing.Size(15, 10);
             this.pictureBoxStuckDetect.TabIndex = 57;
@@ -1010,12 +1001,48 @@
             this.txtStartTheta.TabIndex = 70;
             this.txtStartTheta.Text = "0";
             // 
+            // txtNumParticles
+            // 
+            this.txtNumParticles.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtNumParticles.Location = new System.Drawing.Point(341, 427);
+            this.txtNumParticles.Name = "txtNumParticles";
+            this.txtNumParticles.Size = new System.Drawing.Size(47, 20);
+            this.txtNumParticles.TabIndex = 71;
+            this.txtNumParticles.Text = "1000";
+            // 
+            // label19
+            // 
+            this.label19.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label19.ForeColor = System.Drawing.Color.Black;
+            this.label19.Location = new System.Drawing.Point(303, 428);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(59, 18);
+            this.label19.TabIndex = 72;
+            this.label19.Text = "Num P:";
+            this.label19.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // checkBoxKnownStart
+            // 
+            this.checkBoxKnownStart.AutoSize = true;
+            this.checkBoxKnownStart.Checked = true;
+            this.checkBoxKnownStart.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxKnownStart.ForeColor = System.Drawing.Color.Black;
+            this.checkBoxKnownStart.Location = new System.Drawing.Point(638, 465);
+            this.checkBoxKnownStart.Name = "checkBoxKnownStart";
+            this.checkBoxKnownStart.Size = new System.Drawing.Size(105, 17);
+            this.checkBoxKnownStart.TabIndex = 73;
+            this.checkBoxKnownStart.Text = "Known Start Loc";
+            this.checkBoxKnownStart.UseVisualStyleBackColor = true;
+            this.checkBoxKnownStart.CheckStateChanged += new System.EventHandler(this.checkBoxKnownStart_CheckedChanged);
+            // 
             // JaguarCtrl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlLight;
             this.ClientSize = new System.Drawing.Size(1016, 698);
+            this.Controls.Add(this.txtNumParticles);
+            this.Controls.Add(this.label19);
             this.Controls.Add(this.txtStartTheta);
             this.Controls.Add(this.desiredT);
             this.Controls.Add(this.lblTemp4);
@@ -1031,6 +1058,7 @@
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.buttonReset);
             this.Controls.Add(this.checkBoxHardware);
+            this.Controls.Add(this.checkBoxKnownStart);
             this.Controls.Add(this.pictureBoxStuckDetect);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.checkBoxMotorProtect);
@@ -1038,7 +1066,6 @@
             this.Controls.Add(this.label4);
             this.Controls.Add(this.btnLaserScan);
             this.Controls.Add(this.trackBarTurnPower);
-            this.Controls.Add(this.btnSetMapCenter);
             this.Controls.Add(this.trackBarForwardPower);
             this.Controls.Add(this.lblTemp1);
             this.Controls.Add(this.lblMot3);
@@ -1147,7 +1174,6 @@
         private System.Windows.Forms.Label lblTemp2;
         private System.Windows.Forms.Label lblTemp1;
         private System.Windows.Forms.Label lblBatVol;
-        private System.Windows.Forms.Button btnSetMapCenter;
         private System.Windows.Forms.Timer tmrJoyStickPoll;
         private System.Windows.Forms.TrackBar trackBarTurnPower;
         private System.Windows.Forms.TrackBar trackBarForwardPower;
@@ -1178,6 +1204,9 @@
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.Label desiredT;
         public System.Windows.Forms.TextBox txtStartTheta;
+        public System.Windows.Forms.TextBox txtNumParticles;
+        private System.Windows.Forms.Label label19;
+        private System.Windows.Forms.CheckBox checkBoxKnownStart;
     }
 }
 
