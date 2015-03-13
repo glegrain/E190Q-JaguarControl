@@ -315,11 +315,16 @@ namespace DrRobot.JaguarControl
                 }
 
                 // Draw a test line too see how it works
-                g.DrawLine(laserPen, (int) xCenter, (int) yCenter, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y));
+                //g.DrawLine(laserPen, (int) xCenter, (int) yCenter, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y));
 
-                // Draw some laser scan measurements
-                // TODO
-
+                // Draw center laser scan measurements. Something is not working right now.
+                double distanceToWall = navigation.LaserData[113]; // central laser range
+                Console.WriteLine(distanceToWall); // Distance to wall is 0 !!!??????
+                double xFromRobot = /*distanceToWall * */Math.Cos(navigation.t);
+                double yFromRobot = /*distanceToWall * */Math.Sin(navigation.t);
+                g.DrawLine(laserPen, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y),
+                                     (int) (xCenter + mapResolution * (navigation.x + xFromRobot)), (int) (yCenter - mapResolution * (navigation.y + yFromRobot)));
+                
                 // Draw State Estimate
                 g.DrawPie(estimatePen, (int)(xCenter - partHalfSize + mapResolution * navigation.x_est), (int)(yCenter - partHalfSize - mapResolution * navigation.y_est), partSize, partSize, (int)(-navigation.t_est * 180 / 3.14 - 180 - 25), 50);
 
