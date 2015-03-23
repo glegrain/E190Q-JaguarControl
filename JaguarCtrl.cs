@@ -318,12 +318,14 @@ namespace DrRobot.JaguarControl
                 //g.DrawLine(laserPen, (int) xCenter, (int) yCenter, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y));
 
                 // Draw center laser scan measurements. Something is not working right now.
-                double distanceToWall = navigation.LaserData[111] / (double) 1000; // central laser range convert back to meters
-                Console.WriteLine(distanceToWall);
-                double xFromRobot = distanceToWall * Math.Cos(navigation.t);
-                double yFromRobot = distanceToWall * Math.Sin(navigation.t);
-                g.DrawLine(laserPen, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y),
-                                     (int) (xCenter + mapResolution * (navigation.x + xFromRobot)), (int) (yCenter - mapResolution * (navigation.y + yFromRobot)));
+                for (int i = 0; i < navigation.LaserData.Length; i = i + 3 * 10) {
+                    double distanceToWall = navigation.LaserData[i] / (double) 1000; // central laser range convert back to meters
+                    Console.WriteLine(distanceToWall);
+                    double xFromRobot = distanceToWall * Math.Cos(navigation.t -1.57 + navigation.laserAngles[i]);
+                    double yFromRobot = distanceToWall * Math.Sin(navigation.t -1.57 + navigation.laserAngles[i]);
+                    g.DrawLine(laserPen, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y),
+                                         (int) (xCenter + mapResolution * (navigation.x + xFromRobot)), (int) (yCenter - mapResolution * (navigation.y + yFromRobot)));
+                }
                 
                 // Draw State Estimate
                 g.DrawPie(estimatePen, (int)(xCenter - partHalfSize + mapResolution * navigation.x_est), (int)(yCenter - partHalfSize - mapResolution * navigation.y_est), partSize, partSize, (int)(-navigation.t_est * 180 / 3.14 - 180 - 25), 50);
