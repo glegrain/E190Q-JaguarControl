@@ -151,7 +151,7 @@ namespace DrRobot.JaguarControl
             }
 
 
-            Console.WriteLine(d + " meters.");
+            //Console.WriteLine(d + " meters.");
 
             return d;
 
@@ -178,7 +178,7 @@ namespace DrRobot.JaguarControl
                 // update minDist by either the previous or current value, depending on which is lower
                 minDist = Math.Min(minDist, GetWallDistance(x, y, t, i));
 
-                Console.WriteLine("Min dist: " + minDist + " meters.");
+                //Console.WriteLine("Min dist: " + minDist + " meters.");
             }
 
             // ****************** Additional Student Code: End   ************
