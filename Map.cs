@@ -22,34 +22,37 @@ namespace DrRobot.JaguarControl
         public Map()
         {
 
-	        // This is hard coding at its worst. Just edit the file to put in
-	        // segments of the environment your robot is working in. This is
-	        // used both for visual display and for localization.
+            // This is hard coding at its worst. Just edit the file to put in
+            // segments of the environment your robot is working in. This is
+            // used both for visual display and for localization.
 
-	        // ****************** Additional Student Code: Start ************
-	
-	        // Change hard code here to change map:
+            // ****************** Additional Student Code: Start ************
+    
+            // Change hard code here to change map:
 
-	        numMapSegments = 8;
+            numMapSegments = 8;
             mapSegmentCorners = new double[numMapSegments, 2, 2];
             slopes = new double[numMapSegments];
             intercepts = new double[numMapSegments];
             segmentSizes = new double[numMapSegments];
 
+            // mapSegmentCorners[segment #, x, y]
+            // ex. 
+
             mapSegmentCorners[0, 0, 0] = 3.38 + 5.79 + 3.55 / 2;
-	        mapSegmentCorners[0,0,1] = 2.794;
+            mapSegmentCorners[0,0,1] = 2.794;
             mapSegmentCorners[0, 1, 0] = -3.38 - 5.79 - 3.55 / 2;
             mapSegmentCorners[0, 1, 1] = 2.794;
 
-	        mapSegmentCorners[1,0,0] = -3.55/2;
-	        mapSegmentCorners[1,0,1] = 0.0;
-	        mapSegmentCorners[1,1,0] = -3.55/2;
-	        mapSegmentCorners[1,1,1] = -2.74;
+            mapSegmentCorners[1,0,0] = -3.55/2;
+            mapSegmentCorners[1,0,1] = 0.0;
+            mapSegmentCorners[1,1,0] = -3.55/2;
+            mapSegmentCorners[1,1,1] = -2.74;
 
-	        mapSegmentCorners[2,0,0] = 3.55/2;
-	        mapSegmentCorners[2,0,1] = 0.0;
-	        mapSegmentCorners[2,1,0] = 3.55/2;
-	        mapSegmentCorners[2,1,1] = -2.74;
+            mapSegmentCorners[2,0,0] = 3.55/2;
+            mapSegmentCorners[2,0,1] = 0.0;
+            mapSegmentCorners[2,1,0] = 3.55/2;
+            mapSegmentCorners[2,1,1] = -2.74;
 
             mapSegmentCorners[3, 0, 0] = 3.55/2;
             mapSegmentCorners[3, 0, 1] = 0.0;
@@ -78,24 +81,24 @@ namespace DrRobot.JaguarControl
             // ****************** Additional Student Code: End   ************
 
 
-	        // Set map parameters
-	        // These will be useful in your future coding.
-	        minX = 9999; minY = 9999; maxX=-9999; maxY=-9999;
-	        for (int i=0; i< numMapSegments; i++){
-		
-		        // Set extreme values
+            // Set map parameters
+            // These will be useful in your future coding.
+            minX = 9999; minY = 9999; maxX=-9999; maxY=-9999;
+            for (int i=0; i< numMapSegments; i++){
+        
+                // Set extreme values
                 minX = Math.Min(minX, Math.Min(mapSegmentCorners[i,0,0], mapSegmentCorners[i,1,0]));
                 minY = Math.Min(minY, Math.Min(mapSegmentCorners[i,0,1], mapSegmentCorners[i,1,1]));
                 maxX = Math.Max(maxX, Math.Max(mapSegmentCorners[i,0,0], mapSegmentCorners[i,1,0]));
                 maxY = Math.Max(maxY, Math.Max(mapSegmentCorners[i,0,1], mapSegmentCorners[i,1,1]));
-		
-		        // Set wall segments to be horizontal
-		        slopes[i] = (mapSegmentCorners[i,0,1]-mapSegmentCorners[i,1,1])/(0.001+mapSegmentCorners[i,0,0]-mapSegmentCorners[i,1,0]);
-		        intercepts[i] = mapSegmentCorners[i,0,1] - slopes[i]*mapSegmentCorners[i,0,0];
+        
+                // Set wall segments to be horizontal
+                slopes[i] = (mapSegmentCorners[i,0,1]-mapSegmentCorners[i,1,1])/(0.001+mapSegmentCorners[i,0,0]-mapSegmentCorners[i,1,0]);
+                intercepts[i] = mapSegmentCorners[i,0,1] - slopes[i]*mapSegmentCorners[i,0,0];
 
-		        // Set wall segment lengths
-		        segmentSizes[i] = Math.Sqrt(Math.Pow(mapSegmentCorners[i,0,0]-mapSegmentCorners[i,1,0],2)+Math.Pow(mapSegmentCorners[i,0,1]-mapSegmentCorners[i,1,1],2));
-	        }
+                // Set wall segment lengths
+                segmentSizes[i] = Math.Sqrt(Math.Pow(mapSegmentCorners[i,0,0]-mapSegmentCorners[i,1,0],2)+Math.Pow(mapSegmentCorners[i,0,1]-mapSegmentCorners[i,1,1],2));
+            }
         }
 
 
@@ -105,11 +108,55 @@ namespace DrRobot.JaguarControl
         double GetWallDistance(double x, double y, double t, int segment){
 
 
+            // ****************** Additional Student Code: Start   ************
+
+            // Lab 4
+
+            // d is the expected range measurement, or distance from the robot's position to the wall
+            double d;
+   
+            double slopeSegment = slopes[segment]; // slope of the current segment
+            double interceptSegment = intercepts[segment]; // y-intercept of the current segment
+            
+            // finds a second point (x_prime, y_prime) on the robot path line (line from robot to wall)
+            double deltaX = 1 * Math.Cos(t);
+            double deltaY = 1 * Math.Sin(t);
+            double x_prime = x + deltaX;
+            double y_prime = y + deltaY;
+
+            // Note: x and y are xRobot and yRobot
+            double slopeRobot = (y_prime - y) / (0.001 + x_prime - x); // note: denominator will not be 0
+            double interceptRobot = y - slopeRobot * x;
+
+            // (xIntersect, yIntersect) is where the robot path line and wall segment intersect
+            double xIntersect = (interceptSegment - interceptRobot) / (slopeRobot - slopeSegment);
+            double yIntersect = slopeRobot * xIntersect + interceptRobot; // find yIntersect from robot line path
+
+            // Check point of intersection exists by checking whether lines are parallel
+            if (slopeRobot == slopeSegment)
+            {
+                d = Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2)); // update this, what should d be
+            }
+            else // Check if the point of intersection, which exists, is on the segment; we only need to check x
+            {
+                if (xIntersect > Math.Min(mapSegmentCorners[segment, 0, 0], mapSegmentCorners[segment, 1, 0]) &
+                    xIntersect < Math.Max(mapSegmentCorners[segment, 0, 0], mapSegmentCorners[segment, 1, 0]))
+                {
+                    d = Math.Sqrt(Math.Pow((xIntersect - x), 2) + Math.Pow((yIntersect - y), 2));
+                }
+                else
+                {
+                    d = Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2)); // update this, what should d be
+                }
+            }
 
 
-	        // ****************** Additional Student Code: End   ************
+            Console.WriteLine(d + " meters.");
 
-	        return 0;
+            return d;
+
+            // ****************** Additional Student Code: End   ************
+
         }
 
 
@@ -119,18 +166,24 @@ namespace DrRobot.JaguarControl
 
         public double GetClosestWallDistance(double x, double y, double t){
 
-	        double minDist = 6.000;
+            double minDist = 6.000;
 
-	        // ****************** Additional Student Code: Start ************
+            // ****************** Additional Student Code: Start ************
 
-	        // Put code here that loops through segments, calling the
-	        // function GetWallDistance.
+            // Put code here that loops through segments, calling the
+            // function GetWallDistance.
 
+            for (int i = 0; i < numMapSegments; i++)
+            {
+                // update minDist by either the previous or current value, depending on which is lower
+                minDist = Math.Min(minDist, GetWallDistance(x, y, t, i));
 
+                Console.WriteLine("Min dist: " + minDist + " meters.");
+            }
 
-	        // ****************** Additional Student Code: End   ************
+            // ****************** Additional Student Code: End   ************
 
-	        return minDist;
+            return minDist;
         }
 
 
@@ -145,9 +198,7 @@ namespace DrRobot.JaguarControl
         bool CollisionFound(double n1x, double n1y, double n2x, double n2y, double tol){
 
 
-
-	        
-	        return false;
+            return false;
         }
 
 
@@ -156,9 +207,9 @@ namespace DrRobot.JaguarControl
         // does not hit the segment, a large number is returned.
 
         double GetWallDistance(double x, double y, int segment, double tol, double n2x, double n2y){
-		double dist = 0;
+            double dist = 0;
 
-	        return dist;
+            return dist;
         }
 
 
