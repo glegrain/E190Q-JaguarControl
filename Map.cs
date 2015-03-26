@@ -13,6 +13,7 @@ namespace DrRobot.JaguarControl
         private double[] slopes;
         private double[] segmentSizes;
         private double[] intercepts;
+        private double mapDiagonal;
 
         private double minWorkspaceX = -10;
         private double maxWorkspaceX =  10;
@@ -84,6 +85,7 @@ namespace DrRobot.JaguarControl
             // Set map parameters
             // These will be useful in your future coding.
             minX = 9999; minY = 9999; maxX=-9999; maxY=-9999;
+            mapDiagonal = Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2));
             for (int i=0; i< numMapSegments; i++){
         
                 // Set extreme values
@@ -114,7 +116,6 @@ namespace DrRobot.JaguarControl
 
             // d is the expected range measurement, or distance from the robot's position to the wall
             double d;
-            double maxd =  Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2));
    
             double slopeSegment = slopes[segment]; // slope of the current segment
             double interceptSegment = intercepts[segment]; // y-intercept of the current segment
@@ -126,7 +127,7 @@ namespace DrRobot.JaguarControl
             double y_prime = y + deltaY;
 
             // Note: x and y are xRobot and yRobot
-            double slopeRobot = (y_prime - y) / (0.001 + x_prime - x); // note: denominator will not be 0
+            double slopeRobot = Math.Tan(t);//(y_prime - y) / (0.001 + x_prime - x); // note: denominator will not be 0
             double interceptRobot = y - slopeRobot * x;
 
             // (xIntersect, yIntersect) is where the robot path line and wall segment intersect
@@ -136,31 +137,29 @@ namespace DrRobot.JaguarControl
             // Check point of intersection exists by checking whether lines are parallel
             if (Math.Abs(slopeRobot - slopeSegment) < 0.01)
             {
-                return maxd;
+                return mapDiagonal;
             }
 
             // Check if intersection is on the laser ray and not behind
-            if (t > 0 && xIntersect < x) 
+            if (t > 0 && yIntersect < y) 
             {
-                return maxd;
+                return mapDiagonal;
             }
-            else if (t < 0  && xIntersect > x)
+            else if (t < 0  && yIntersect > y)
             {
-                return maxd;
+                return mapDiagonal;
             }
             
+            // Math.Abs(Math.Atan2(xIntersect, yIntersect) - t) > 0
+
             // Check if the point of intersection, which exists, is on the segment; we only need to check x
-            if (xIntersect > Math.Min(mapSegmentCorners[segment, 0, 0], mapSegmentCorners[segment, 1, 0]) &
-                xIntersect < Math.Max(mapSegmentCorners[segment, 0, 0], mapSegmentCorners[segment, 1, 0]))
+            if (xIntersect < Math.Min(mapSegmentCorners[segment, 0, 0], mapSegmentCorners[segment, 1, 0]) ||
+                xIntersect > Math.Max(mapSegmentCorners[segment, 0, 0], mapSegmentCorners[segment, 1, 0]))
             {
-                d = Math.Sqrt(Math.Pow((xIntersect - x), 2) + Math.Pow((yIntersect - y), 2));
-            }
-            else
-            {
-                d = maxd;
+                return mapDiagonal;
             }
 
-            return d;
+            return Math.Sqrt(Math.Pow((xIntersect - x), 2) + Math.Pow((yIntersect - y), 2));
 
             // ****************** Additional Student Code: End   ************
 
