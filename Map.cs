@@ -1,4 +1,4 @@
-using System;
+    using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -132,8 +132,14 @@ namespace DrRobot.JaguarControl
             double xIntersect = (interceptSegment - interceptRobot) / (slopeRobot - slopeSegment);
             double yIntersect = slopeRobot * xIntersect + interceptRobot; // find yIntersect from robot line path
 
+            // Check to see if the wall is in front of the robot and not behind // NOT WORKING
+            if ((slopeRobot * deltaX + deltaY) / (slopeRobot * x + interceptRobot - y) < 0)
+            {
+                return (double)9999999; // random big number to hack the min function in GetClosestWallDistance
+            }
+
             // Check point of intersection exists by checking whether lines are parallel
-            if (slopeRobot == slopeSegment)
+            if (Math.Abs(slopeRobot - slopeSegment) < 0.01)
             {
                 d = Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2)); // update this, what should d be
             }
@@ -146,12 +152,9 @@ namespace DrRobot.JaguarControl
                 }
                 else
                 {
-                    d = Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2)); // update this, what should d be
+                    d = Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2)); // update this, what should d be 
                 }
             }
-
-
-            //Console.WriteLine(d + " meters.");
 
             return d;
 
@@ -166,7 +169,7 @@ namespace DrRobot.JaguarControl
 
         public double GetClosestWallDistance(double x, double y, double t){
 
-            double minDist = 6.000;
+            double minDist = 30.000; // Changed from 6 to 30 for debugging
 
             // ****************** Additional Student Code: Start ************
 
