@@ -318,7 +318,7 @@ namespace DrRobot.JaguarControl
                 //g.DrawLine(laserPen, (int) xCenter, (int) yCenter, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y));
 
                 // Draw center laser scan measurements. Something is not working right now.
-                for (int i = 0; i < navigation.LaserData.Length; i = i + 3 * 10) {
+                for (int i = 0; i < navigation.LaserData.Length; i = i + 3) {
                     double distanceToWall = navigation.LaserData[i] / (double) 1000; // central laser range convert back to meters
                     Console.WriteLine(distanceToWall);
                     double xFromRobot = distanceToWall * Math.Cos(navigation.t -1.57 + navigation.laserAngles[i]);
