@@ -45,12 +45,12 @@ namespace DrRobot.JaguarControl
             mapSegmentCorners[0, 1, 0] = -3.38 - 5.79 - 3.55 / 2;
             mapSegmentCorners[0, 1, 1] = 2.794;
 
-            mapSegmentCorners[1,0,0] = -3.55/2;
+            mapSegmentCorners[1,0,0] = -3.55/2;// + 1;
             mapSegmentCorners[1,0,1] = 0.0;
             mapSegmentCorners[1,1,0] = -3.55/2;
             mapSegmentCorners[1,1,1] = -2.74;
 
-            mapSegmentCorners[2,0,0] = 3.55/2;
+            mapSegmentCorners[2,0,0] = 3.55/2;// + 1;
             mapSegmentCorners[2,0,1] = 0.0;
             mapSegmentCorners[2,1,0] = 3.55/2;
             mapSegmentCorners[2,1,1] = -2.74;
@@ -119,26 +119,20 @@ namespace DrRobot.JaguarControl
    
             double slopeSegment = slopes[segment]; // slope of the current segment
             double interceptSegment = intercepts[segment]; // y-intercept of the current segment
-            
-            // finds a second point (x_prime, y_prime) on the robot path line (line from robot to wall)
-            double deltaX = 1 * Math.Cos(t);
-            double deltaY = 1 * Math.Sin(t);
-            double x_prime = x + deltaX;
-            double y_prime = y + deltaY;
 
             // Note: x and y are xRobot and yRobot
-            double slopeRobot = Math.Tan(t);//(y_prime - y) / (0.001 + x_prime - x); // note: denominator will not be 0
+            double slopeRobot = Math.Tan(t);
             double interceptRobot = y - slopeRobot * x;
-
-            // (xIntersect, yIntersect) is where the robot path line and wall segment intersect
-            double xIntersect = (interceptSegment - interceptRobot) / (slopeRobot - slopeSegment);
-            double yIntersect = slopeRobot * xIntersect + interceptRobot; // find yIntersect from robot line path
 
             // Check point of intersection exists by checking whether lines are parallel
             if (Math.Abs(slopeRobot - slopeSegment) < 0.01)
             {
                 return mapDiagonal;
             }
+
+            // (xIntersect, yIntersect) is where the robot path line and wall segment intersect
+            double xIntersect = (interceptSegment - interceptRobot) / (slopeRobot - slopeSegment);
+            double yIntersect = slopeRobot * xIntersect + interceptRobot; // find yIntersect from robot line path
 
             // Check if intersection is on the laser ray and not behind
             if (t > 0 && yIntersect < y) 
@@ -150,9 +144,15 @@ namespace DrRobot.JaguarControl
                 return mapDiagonal;
             }
             
-            // Math.Abs(Math.Atan2(xIntersect, yIntersect) - t) > 0
+            bool isOutsideOfSegment = yIntersect < Math.Min(mapSegmentCorners[segment, 0, 1], mapSegmentCorners[segment, 1, 1]) ||
+                                      yIntersect > Math.Max(mapSegmentCorners[segment, 0, 1], mapSegmentCorners[segment, 1, 1]);
+            // Check if the segment is a vertical line
+            if (Math.Abs(slopeSegment) > 1000 && !isOutsideOfSegment)
+            {
+                return Math.Sqrt(Math.Pow((xIntersect - x), 2) + Math.Pow((yIntersect - y), 2));
+            }
 
-            // Check if the point of intersection, which exists, is on the segment; we only need to check x
+            //Check if the point of intersection, which exists, is on the segment; we only need to check x
             if (xIntersect < Math.Min(mapSegmentCorners[segment, 0, 0], mapSegmentCorners[segment, 1, 0]) ||
                 xIntersect > Math.Max(mapSegmentCorners[segment, 0, 0], mapSegmentCorners[segment, 1, 0]))
             {
