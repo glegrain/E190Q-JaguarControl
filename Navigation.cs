@@ -93,6 +93,16 @@ namespace DrRobot.JaguarControl
             public Particle()
             {
             }
+            
+            // Lab 4; our own copy method
+            public Particle copy()
+            {
+                Particle copy = new Particle();
+                copy.x = this.y;
+                copy.t = this.t;
+                copy.w = this.w;
+                return copy;
+            }
         }
 
         #endregion
@@ -796,7 +806,7 @@ namespace DrRobot.JaguarControl
                 totalWeight = totalWeight + propagatedParticles[i].w;
 
                 // 3) Update set of particles with propagated particles
-                particles[i] = propagatedParticles[i];
+                particles[i] = propagatedParticles[i].copy();
 
             }
 
@@ -824,43 +834,43 @@ namespace DrRobot.JaguarControl
                 if (weight < 0.25) // add 1 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 0.5) // add 2 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 0.75) // add 3 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                     // add 3rd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 1.0) // add 4 copies
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                     // add 3rd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                     // add 4th copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = particles[i].copy();
                     ++numTempParticles;
                 }
             }
@@ -872,7 +882,7 @@ namespace DrRobot.JaguarControl
                 // tried to make RandomGaussian() go from 0 to 1, instead of -2 to 2
                 // Guillaume wants to try with uniform
                 int r = random.Next(0, numTempParticles - 1);
-                particles[i] = tempParticles[r];
+                particles[i] = tempParticles[r].copy();
             }
             //}
 
