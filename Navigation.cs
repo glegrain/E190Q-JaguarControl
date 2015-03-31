@@ -98,7 +98,8 @@ namespace DrRobot.JaguarControl
             public Particle copy()
             {
                 Particle copy = new Particle();
-                copy.x = this.y;
+                copy.x = this.x;
+                copy.y = this.y;
                 copy.t = this.t;
                 copy.w = this.w;
                 return copy;
