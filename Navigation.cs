@@ -227,7 +227,7 @@ namespace DrRobot.JaguarControl
                 MotionPrediction();
 
                 // Update the global state of the robot - x,y,t (lab 2)
-                LocalizeRealWithOdometry();
+                //LocalizeRealWithOdometry();
 
                 // Update the global state of the robot - x,y,t (lab 2)
                 //LocalizeRealWithIMU();
@@ -694,18 +694,18 @@ namespace DrRobot.JaguarControl
             angleTravelled = (wheelDistanceL - wheelDistanceR) / (2 * robotRadius);
 
             // Calculate estimated states x_est, y_est, t_test
-            x_est = x + distanceTravelled * Math.Cos(t + angleTravelled / 2);
-            y_est = y + distanceTravelled * Math.Sin(t + angleTravelled / 2);
-            t_est = t + angleTravelled;
+            x = x + distanceTravelled * Math.Cos(t + angleTravelled / 2);
+            y = y + distanceTravelled * Math.Sin(t + angleTravelled / 2);
+            t = t + angleTravelled;
 
             // Keep angle of robot within -pi and pi
-            if (t_est >= Math.PI) // if angle is over pi
+            if (t >= Math.PI) // if angle is over pi
             {
-                t_est = (t_est % Math.PI) - Math.PI; //roll over to -pi to 0 range
+                t = (t % Math.PI) - Math.PI; //roll over to -pi to 0 range
             }
-            if (t_est <= -Math.PI) // if angle is less than pi
+            if (t <= -Math.PI) // if angle is less than pi
             {
-                t_est = (t_est % Math.PI) + Math.PI; //roll over to 0 to pi range
+                t = (t % Math.PI) + Math.PI; //roll over to 0 to pi range
             }
 
             // Update last encoder count variables
@@ -763,7 +763,7 @@ namespace DrRobot.JaguarControl
             //x_est = 0; y_est = 0; t_est = 0; // This was in the base code. Why?
             // Put code here to calculate x_est, y_est, t_est using a PF
 
-            x = x_est; y = y_est; t = t_est;
+            //x = x_est; y = y_est; t = t_est;
 
             // Edited in Lab 4
 
@@ -903,6 +903,9 @@ namespace DrRobot.JaguarControl
             x_est = x_est_tot / numParticles;
             y_est = y_est_tot / numParticles;
             t_est = t_est_tot / numParticles;
+            //x = x_est;
+            //y = y_est;
+            //t = t_est;
 
 
 
