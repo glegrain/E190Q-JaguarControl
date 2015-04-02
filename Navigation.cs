@@ -775,8 +775,9 @@ namespace DrRobot.JaguarControl
             // QUESTION: DO WE ADD RANDOMNESS OR ASSUME RANDOMNESS AS WE PROPAGATE?
 
             // Calculate stdev for each encoder value before looping through particles
-            double stdevL = 0.24 * wheelDistanceL;
-            double stdevR = 0.24 * wheelDistanceR;
+            // Change this coef. to change the spread. Experimental value from lab 2 with infinte nb of particle was 0.14
+            double stdevL = 0.5 * wheelDistanceL;
+            double stdevR = 0.5 * wheelDistanceR;
 
             // Don't try to localize if the robot is not moving
             if (distanceTravelled == 0 && angleTravelled == 0) return;
