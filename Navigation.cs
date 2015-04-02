@@ -775,11 +775,11 @@ namespace DrRobot.JaguarControl
             // QUESTION: DO WE ADD RANDOMNESS OR ASSUME RANDOMNESS AS WE PROPAGATE?
 
             // Calculate stdev for each encoder value before looping through particles
-            double stdevL = 0.14 * wheelDistanceL;
-            double stdevR = 0.14 * wheelDistanceR;
+            double stdevL = 0.24 * wheelDistanceL;
+            double stdevR = 0.24 * wheelDistanceR;
 
             // Don't try to localize if the robot is not moving
-            if (distanceTravelled == 0 || angleTravelled == 0) return;
+            if (distanceTravelled == 0 && angleTravelled == 0) return;
             
             for (int i = 0; i < numParticles; ++i)
             {
@@ -798,9 +798,9 @@ namespace DrRobot.JaguarControl
                 // Angle traveled should be within -pi and pi
                 double randAngleTravelled = (randDistanceL - randDistanceR) / (2 * robotRadius);
 
-                propagatedParticles[i].x = particles[i].x + randDistanceTravelled * Math.Cos(t + angleTravelled / 2);
-                propagatedParticles[i].y = particles[i].y + randDistanceTravelled * Math.Sin(t + angleTravelled / 2);
-                propagatedParticles[i].t = particles[i].t + angleTravelled;
+                propagatedParticles[i].x = particles[i].x + randDistanceTravelled * Math.Cos(particles[i].t + randAngleTravelled / 2);
+                propagatedParticles[i].y = particles[i].y + randDistanceTravelled * Math.Sin(particles[i].t + randAngleTravelled / 2);
+                propagatedParticles[i].t = particles[i].t + randAngleTravelled;
 
                 // 2) Calculate weight of particle
                 propagatedParticles[i].w = CalculateWeight(i);
