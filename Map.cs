@@ -31,7 +31,7 @@ namespace DrRobot.JaguarControl
     
             // Change hard code here to change map:
 
-            numMapSegments = 11;
+            numMapSegments = 16;
             mapSegmentCorners = new double[numMapSegments, 2, 2];
             slopes = new double[numMapSegments];
             intercepts = new double[numMapSegments];
@@ -91,10 +91,37 @@ namespace DrRobot.JaguarControl
             mapSegmentCorners[9, 1, 1] = -2.74 - 2.31 - 5;
 
 
-            mapSegmentCorners[10, 0, 0] = -3.55 / 2;
-            mapSegmentCorners[10, 0, 1] = -2.74 - 2.31;
-            mapSegmentCorners[10, 1, 0] = -3.55/2;
-            mapSegmentCorners[10, 1, 1] = -2.74 - 2.31 - 1;
+            mapSegmentCorners[10, 0, 0] =  3.55 / 2 + 3.05;
+            mapSegmentCorners[10, 0, 1] = -2.74;
+            mapSegmentCorners[10, 1, 0] =  3.55 / 2 + 3.05;
+            mapSegmentCorners[10, 1, 1] = -2.74 - 2.31 - 5.5;
+
+            mapSegmentCorners[11, 0, 0] = -3.55 / 2 - 3.05;
+            mapSegmentCorners[11, 0, 1] = -2.74;
+            mapSegmentCorners[11, 1, 0] = -3.55 / 2 - 3.05;
+            mapSegmentCorners[11, 1, 1] = -2.74 - 2.31 - 5.5;
+
+            mapSegmentCorners[12, 0, 0] =  3.55 / 2 + 5.79;
+            mapSegmentCorners[12, 0, 1] =  0;
+            mapSegmentCorners[12, 1, 0] =  3.55 / 2 + 5.79;
+            mapSegmentCorners[12, 1, 1] = -2.74 - 2.31 - 5.5;
+
+            mapSegmentCorners[13, 0, 0] = -3.55 / 2 - 5.79;
+            mapSegmentCorners[13, 0, 1] =  0;
+            mapSegmentCorners[13, 1, 0] = -3.55 / 2 - 5.79;
+            mapSegmentCorners[13, 1, 1] = -2.74 - 2.31 - 5.5;
+
+            mapSegmentCorners[14, 0, 0] =  3.38 + 5.79 + 3.55 / 2;
+            mapSegmentCorners[14, 0, 1] =  2.794;
+            mapSegmentCorners[14, 1, 0] =  3.38 + 5.79 + 3.55 / 2;
+            mapSegmentCorners[14, 1, 1] = -2.74 - 2.31 - 5.5;
+
+            mapSegmentCorners[15, 0, 0] = -3.38 - 5.79 - 3.55 / 2;
+            mapSegmentCorners[15, 0, 1] =  2.794;
+            mapSegmentCorners[15, 1, 0] = -3.38 - 5.79 - 3.55 / 2;
+            mapSegmentCorners[15, 1, 1] = -2.74 - 2.31 - 5.5;
+
+
             // ****************** Additional Student Code: End   ************
 
 
