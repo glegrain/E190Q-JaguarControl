@@ -31,7 +31,7 @@ namespace DrRobot.JaguarControl
     
             // Change hard code here to change map:
 
-            numMapSegments = 8;
+            numMapSegments = 11;
             mapSegmentCorners = new double[numMapSegments, 2, 2];
             slopes = new double[numMapSegments];
             intercepts = new double[numMapSegments];
@@ -79,6 +79,22 @@ namespace DrRobot.JaguarControl
             mapSegmentCorners[7, 0, 1] = -2.74 - 2.31;
             mapSegmentCorners[7, 1, 0] = -5.03/2;
             mapSegmentCorners[7, 1, 1] = -2.74 - 2.31;
+
+            mapSegmentCorners[8, 0, 0] = 5.03 / 2;
+            mapSegmentCorners[8, 0, 1] = -2.74 - 2.31;
+            mapSegmentCorners[8, 1, 0] = 5.03/2;
+            mapSegmentCorners[8, 1, 1] = -2.74 - 2.31 - 5;
+
+            mapSegmentCorners[9, 0, 0] = -5.03 / 2;
+            mapSegmentCorners[9, 0, 1] = -2.74 - 2.31;
+            mapSegmentCorners[9, 1, 0] = -5.03/2;
+            mapSegmentCorners[9, 1, 1] = -2.74 - 2.31 - 5;
+
+
+            mapSegmentCorners[10, 0, 0] = -3.55 / 2;
+            mapSegmentCorners[10, 0, 1] = -2.74 - 2.31;
+            mapSegmentCorners[10, 1, 0] = -3.55/2;
+            mapSegmentCorners[10, 1, 1] = -2.74 - 2.31 - 1;
             // ****************** Additional Student Code: End   ************
 
 
@@ -135,15 +151,15 @@ namespace DrRobot.JaguarControl
             double yIntersect = slopeRobot * xIntersect + interceptRobot; // find yIntersect from robot line path
 
             // Check if intersection is on the laser ray and not behind
-            if (t > 0 && yIntersect < y) 
+            if (t >= 0 && t < Math.PI / 2 && xIntersect > x && yIntersect > y);                // OK, upper right quadrant
+            else if (t >= Math.PI/2 && t < Math.PI && xIntersect < x && yIntersect > y);       // OK, upper left quadrant
+            else if (t <= 0 && t > - Math.PI / 2 && xIntersect > x && yIntersect < y);         // OK, bottom right quadrant
+            else if (t <= -Math.PI/2 && t > - Math.PI && xIntersect < x && yIntersect < y);    // OK, bottom left quadrant
+            else
             {
                 return mapDiagonal;
             }
-            else if (t < 0  && yIntersect > y)
-            {
-                return mapDiagonal;
-            }
-            
+
             bool isOutsideOfSegment = yIntersect < Math.Min(mapSegmentCorners[segment, 0, 1], mapSegmentCorners[segment, 1, 1]) ||
                                       yIntersect > Math.Max(mapSegmentCorners[segment, 0, 1], mapSegmentCorners[segment, 1, 1]);
             // Check if the segment is a vertical line
