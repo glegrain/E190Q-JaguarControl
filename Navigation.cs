@@ -76,7 +76,7 @@ namespace DrRobot.JaguarControl
         public Map map;
         public Particle[] particles;
         public Particle[] propagatedParticles;
-        public int numParticles = 1000;
+        public int numParticles = 3000;
         public double K_wheelRandomness = 0.15;//0.25
         public Random random = new Random();
         public bool newLaserData = false;
@@ -92,6 +92,17 @@ namespace DrRobot.JaguarControl
 
             public Particle()
             {
+            }
+            
+            // Lab 4; our own copy method
+            public Particle copy()
+            {
+                Particle copy = new Particle();
+                copy.x = this.x;
+                copy.y = this.y;
+                copy.t = this.t;
+                copy.w = this.w;
+                return copy;
             }
         }
 
@@ -216,7 +227,7 @@ namespace DrRobot.JaguarControl
                 MotionPrediction();
 
                 // Update the global state of the robot - x,y,t (lab 2)
-                LocalizeRealWithOdometry();
+                //LocalizeRealWithOdometry();
 
                 // Update the global state of the robot - x,y,t (lab 2)
                 //LocalizeRealWithIMU();
@@ -680,21 +691,21 @@ namespace DrRobot.JaguarControl
 
             // Angle traveled is difference in distances traveled by each wheel / 2*L
             // Angle traveled should be within -pi and pi
-            angleTravelled = (wheelDistanceL - wheelDistanceR) / (2 * robotRadius);
+            angleTravelled = -(wheelDistanceL - wheelDistanceR) / (2 * robotRadius);
 
             // Calculate estimated states x_est, y_est, t_test
-            x_est = x + distanceTravelled * Math.Cos(t + angleTravelled / 2);
-            y_est = y + distanceTravelled * Math.Sin(t + angleTravelled / 2);
-            t_est = t + angleTravelled;
+            x = x + distanceTravelled * Math.Cos(t + angleTravelled / 2);
+            y = y + distanceTravelled * Math.Sin(t + angleTravelled / 2);
+            t = t + angleTravelled;
 
             // Keep angle of robot within -pi and pi
-            if (t_est >= Math.PI) // if angle is over pi
+            if (t >= Math.PI) // if angle is over pi
             {
-                t_est = (t_est % Math.PI) - Math.PI; //roll over to -pi to 0 range
+                t = (t % Math.PI) - Math.PI; //roll over to -pi to 0 range
             }
-            if (t_est <= -Math.PI) // if angle is less than pi
+            if (t <= -Math.PI) // if angle is less than pi
             {
-                t_est = (t_est % Math.PI) + Math.PI; //roll over to 0 to pi range
+                t = (t % Math.PI) + Math.PI; //roll over to 0 to pi range
             }
 
             // Update last encoder count variables
@@ -752,11 +763,12 @@ namespace DrRobot.JaguarControl
             //x_est = 0; y_est = 0; t_est = 0; // This was in the base code. Why?
             // Put code here to calculate x_est, y_est, t_est using a PF
 
-            x = x_est; y = y_est; t = t_est;
+            //x = x_est; y = y_est; t = t_est;
 
             // Edited in Lab 4
 
             double totalWeight = 0; // this is for the prediction step; sum of all particles' weights
+            double maxWeight = 0;
 
             /// Code from Lab 2: Odometry 
 
@@ -764,11 +776,12 @@ namespace DrRobot.JaguarControl
             // QUESTION: DO WE ADD RANDOMNESS OR ASSUME RANDOMNESS AS WE PROPAGATE?
 
             // Calculate stdev for each encoder value before looping through particles
-            double stdevL = 0.14 * wheelDistanceL;
-            double stdevR = 0.14 * wheelDistanceR;
+            // Change this coef. to change the spread. Experimental value from lab 2 with infinte nb of particle was 0.14
+            double stdevL = 0.05 * wheelDistanceL;
+            double stdevR = 0.05 * wheelDistanceR;
 
             // Don't try to localize if the robot is not moving
-            if (distanceTravelled == 0 || angleTravelled == 0) return;
+            if (distanceTravelled == 0 && angleTravelled == 0) return;
             
             for (int i = 0; i < numParticles; ++i)
             {
@@ -785,18 +798,19 @@ namespace DrRobot.JaguarControl
 
                 // Angle traveled is difference in distances traveled by each wheel / 2*L
                 // Angle traveled should be within -pi and pi
-                double randAngleTravelled = (randDistanceL - randDistanceR) / (2 * robotRadius);
+                double randAngleTravelled = -(randDistanceL - randDistanceR) / (2 * robotRadius);
 
-                propagatedParticles[i].x = particles[i].x + randDistanceTravelled * Math.Cos(t + angleTravelled / 2);
-                propagatedParticles[i].y = particles[i].y + randDistanceTravelled * Math.Sin(t + angleTravelled / 2);
-                propagatedParticles[i].t = particles[i].t + angleTravelled;
+                propagatedParticles[i].x = particles[i].x + randDistanceTravelled * Math.Cos(particles[i].t + randAngleTravelled / 2);
+                propagatedParticles[i].y = particles[i].y + randDistanceTravelled * Math.Sin(particles[i].t + randAngleTravelled / 2);
+                propagatedParticles[i].t = particles[i].t + randAngleTravelled;
 
                 // 2) Calculate weight of particle
                 propagatedParticles[i].w = CalculateWeight(i);
                 totalWeight = totalWeight + propagatedParticles[i].w;
+                maxWeight = Math.Max(totalWeight, propagatedParticles[i].w);
 
                 // 3) Update set of particles with propagated particles
-                particles[i] = propagatedParticles[i];
+                //particles[i] = propagatedParticles[i].copy();  // WHY IS THAT HERE???? Does not make sense to me
 
             }
 
@@ -819,48 +833,48 @@ namespace DrRobot.JaguarControl
             {
                 // normalize weights so we can compare them on a range of 0 to 1.0
                 // set weight to 0 when the weight of all particles if 0
-                double weight = (totalWeight > 0) ? particles[i].w / totalWeight: 0;
+                double weight = (maxWeight > 0) ? propagatedParticles[i].w / maxWeight: 0;
 
                 if (weight < 0.25) // add 1 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 0.5) // add 2 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 0.75) // add 3 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 3rd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 1.0) // add 4 copies
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 3rd copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 4th copy
-                    tempParticles[numTempParticles] = particles[i];
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
             }
@@ -872,7 +886,7 @@ namespace DrRobot.JaguarControl
                 // tried to make RandomGaussian() go from 0 to 1, instead of -2 to 2
                 // Guillaume wants to try with uniform
                 int r = random.Next(0, numTempParticles - 1);
-                particles[i] = tempParticles[r];
+                particles[i] = tempParticles[r].copy();
             }
             //}
 
@@ -893,8 +907,6 @@ namespace DrRobot.JaguarControl
             y_est = y_est_tot / numParticles;
             t_est = t_est_tot / numParticles;
 
-
-
             // ****************** Additional Student Code: End   ************
 
         }
@@ -907,25 +919,29 @@ namespace DrRobot.JaguarControl
 
         double CalculateWeight(int p)
         {
-	        // double weight = 0;
+	         double weight = 1;
 
 	        // ****************** Additional Student Code: Start ************
 
 	        // Put code here to calculated weight. Feel free to use the
 	        // function map.GetClosestWallDistance from Map.cs.
 
-            // particleDist is the distance from the particle to the closest wall
-            double particleDist = map.GetClosestWallDistance(propagatedParticles[p].x, propagatedParticles[p].y, propagatedParticles[p].t);
+            double particleDist, robotDist;
+            for (int i = 0; i < LaserData.Length; i=i+laserStepSize*8)
+            {
+                // particleDist is the distance from the particle to the closest wall
+                particleDist = map.GetClosestWallDistance(propagatedParticles[p].x, propagatedParticles[p].y, propagatedParticles[p].t -1.57 + laserAngles[i]);
+                // robotDist is the distance from the robot to the closest wall
+                robotDist = LaserData[i] / 1000;
+                if (robotDist == 6.00 || particleDist == 6.00 || LaserData[i] < 100) weight *= 0.01;
+                else
+                {
+                    double value = GaussianFunction(particleDist, robotDist, 0.2);
+                    weight *= value;
+                }
+            }
 
-            // robotDist is the distance from the robot to the closest wall
-            double robotDist = LaserData[113] / 1000;
-
-            return GaussianFunction(particleDist, robotDist, 1 / (2 * Math.Pow(200, 2)));
-
-            //propagatedParticles[p].w = weight;
-
-            //return weight;
-
+            return weight;
         }
 
 
