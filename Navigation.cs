@@ -76,7 +76,7 @@ namespace DrRobot.JaguarControl
         public Map map;
         public Particle[] particles;
         public Particle[] propagatedParticles;
-        public int numParticles = 3000;
+        public int numParticles = 5000;
         public double K_wheelRandomness = 0.15;//0.25
         public Random random = new Random();
         public bool newLaserData = false;
@@ -803,9 +803,6 @@ namespace DrRobot.JaguarControl
                 propagatedParticles[i].y = particles[i].y + randDistanceTravelled * Math.Sin(particles[i].t + randAngleTravelled / 2);
                 propagatedParticles[i].t = particles[i].t + randAngleTravelled;
 
-                // 2) Calculate weight of particle
-                propagatedParticles[i].w = CalculateWeight(i);
-                maxWeight = Math.Max(maxWeight, propagatedParticles[i].w);
 
                 // 3) Update set of particles with propagated particles
                 //particles[i] = propagatedParticles[i].copy();  // WHY IS THAT HERE???? Does not make sense to me
@@ -829,6 +826,11 @@ namespace DrRobot.JaguarControl
                 //{
                 for (int i = 0; i < numParticles; ++i)
                 {
+
+                    // 2) Calculate weight of particle
+                    propagatedParticles[i].w = CalculateWeight(i);
+                    maxWeight = Math.Max(maxWeight, propagatedParticles[i].w);
+                    
                     // normalize weights so we can compare them on a range of 0 to 1.0
                     // set weight to 0 when the weight of all particles if 0
                     double weight = (maxWeight > 0) ? propagatedParticles[i].w / maxWeight: 0;
