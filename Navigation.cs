@@ -223,7 +223,7 @@ namespace DrRobot.JaguarControl
                 // Update Sensor Readings
                 UpdateSensorMeasurements();
 
-                // Determine the change of robot position, orientation (lab 2)	
+                // Determine the change of robot position, orientation (lab 2)  
                 MotionPrediction();
 
                 // Update the global state of the robot - x,y,t (lab 2)
@@ -767,8 +767,7 @@ namespace DrRobot.JaguarControl
 
             // Edited in Lab 4
 
-            double totalWeight = 0; // this is for the prediction step; sum of all particles' weights
-            double maxWeight = 0;
+            double maxWeight = 0; // this is for the prediction step; sum of all particles' weights
 
             /// Code from Lab 2: Odometry 
 
@@ -777,8 +776,8 @@ namespace DrRobot.JaguarControl
 
             // Calculate stdev for each encoder value before looping through particles
             // Change this coef. to change the spread. Experimental value from lab 2 with infinte nb of particle was 0.14
-            double stdevL = 0.05 * wheelDistanceL;
-            double stdevR = 0.05 * wheelDistanceR;
+            double stdevL = 0.5 * wheelDistanceL;
+            double stdevR = 0.5 * wheelDistanceR;
 
             // Don't try to localize if the robot is not moving
             if (distanceTravelled == 0 && angleTravelled == 0) return;
@@ -806,8 +805,7 @@ namespace DrRobot.JaguarControl
 
                 // 2) Calculate weight of particle
                 propagatedParticles[i].w = CalculateWeight(i);
-                totalWeight = totalWeight + propagatedParticles[i].w;
-                maxWeight = Math.Max(totalWeight, propagatedParticles[i].w);
+                maxWeight = Math.Max(maxWeight, propagatedParticles[i].w);
 
                 // 3) Update set of particles with propagated particles
                 //particles[i] = propagatedParticles[i].copy();  // WHY IS THAT HERE???? Does not make sense to me
@@ -862,7 +860,7 @@ namespace DrRobot.JaguarControl
                     tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
-                else if (weight < 1.0) // add 4 copies
+                else if (weight <= 1.0) // add 4 copies
                 {
                     // add 1st copy
                     tempParticles[numTempParticles] = propagatedParticles[i].copy();
@@ -919,20 +917,20 @@ namespace DrRobot.JaguarControl
 
         double CalculateWeight(int p)
         {
-	         double weight = 1;
+             double weight = 1;
 
-	        // ****************** Additional Student Code: Start ************
+            // ****************** Additional Student Code: Start ************
 
-	        // Put code here to calculated weight. Feel free to use the
-	        // function map.GetClosestWallDistance from Map.cs.
+            // Put code here to calculated weight. Feel free to use the
+            // function map.GetClosestWallDistance from Map.cs.
 
             double particleDist, robotDist;
-            for (int i = 0; i < LaserData.Length; i=i+laserStepSize*8)
+            for (int i = 0; i < LaserData.Length; i=i+laserStepSize*12)
             {
                 // particleDist is the distance from the particle to the closest wall
                 particleDist = map.GetClosestWallDistance(propagatedParticles[p].x, propagatedParticles[p].y, propagatedParticles[p].t -1.57 + laserAngles[i]);
                 // robotDist is the distance from the robot to the closest wall
-                robotDist = LaserData[i] / 1000;
+                robotDist = LaserData[i] / 1000.0;
                 if (robotDist == 6.00 || particleDist == 6.00 || LaserData[i] < 100) weight *= 0.01;
                 else
                 {
@@ -953,17 +951,17 @@ namespace DrRobot.JaguarControl
         void InitializeParticles() {
 
 
-	        // Set particles in random locations and orientations within environment
-	        for (int i=0; i< numParticles; i++){
+            // Set particles in random locations and orientations within environment
+            for (int i=0; i< numParticles; i++){
 
-		        // Either set the particles at known start position [0 0 0],  
-		        // or set particles at random locations.
+                // Either set the particles at known start position [0 0 0],  
+                // or set particles at random locations.
 
                 if (jaguarControl.startMode == jaguarControl.UNKNOWN)
-    		        SetRandomPos(i);
+                    SetRandomPos(i);
                 else if (jaguarControl.startMode == jaguarControl.KNOWN)
-		            SetStartPos(i);
-	        }
+                    SetStartPos(i);
+            }
             
         }
 
@@ -976,12 +974,12 @@ namespace DrRobot.JaguarControl
 
         void SetRandomPos(int p){
 
-	        // ****************** Additional Student Code: Start ************
+            // ****************** Additional Student Code: Start ************
 
-	        // Put code here to calculated the position, orientation of 
+            // Put code here to calculated the position, orientation of 
             // particles[p]. Feel free to use the random.NextDouble() function. 
-	        // It might be helpful to use boundaries defined in the
-	        // Map.cs file (e.g. map.minX)
+            // It might be helpful to use boundaries defined in the
+            // Map.cs file (e.g. map.minX)
 
             particles[p].x = (random.Next((int)(numParticles * map.minX), (int)(numParticles * map.maxX))) / (double) numParticles;
             particles[p].y = (random.Next((int)(numParticles * map.minY), (int)(numParticles * map.maxY))) / (double) numParticles;
@@ -996,9 +994,9 @@ namespace DrRobot.JaguarControl
 
         // For particle p, this function will select a start predefined position. 
         void SetStartPos(int p){
-	        particles[p].x = initialX;
-	        particles[p].y = initialY;
-	        particles[p].t = initialT;
+            particles[p].x = initialX;
+            particles[p].y = initialY;
+            particles[p].t = initialT;
         }
 
 
@@ -1009,18 +1007,18 @@ namespace DrRobot.JaguarControl
 
         double RandomGaussian()
         {
-	        double U1, U2, V1=0, V2;
-	        double S = 2.0;
-	        while(S >= 1.0) 
-	        {
-		        U1 = random.NextDouble();
+            double U1, U2, V1=0, V2;
+            double S = 2.0;
+            while(S >= 1.0) 
+            {
+                U1 = random.NextDouble();
                 U2 = random.NextDouble();
-		        V1 = 2.0*U1-1.0;
-		        V2 = 2.0*U2-1.0;
-		        S = Math.Pow(V1,2) + Math.Pow(V2,2);
-	        }
-	        double gauss = V1*Math.Sqrt((-2.0*Math.Log(S))/S);
-	        return gauss;
+                V1 = 2.0*U1-1.0;
+                V2 = 2.0*U2-1.0;
+                S = Math.Pow(V1,2) + Math.Pow(V2,2);
+            }
+            double gauss = V1*Math.Sqrt((-2.0*Math.Log(S))/S);
+            return gauss;
         }
 
         // LAB 4 EDITED FUNCTION
