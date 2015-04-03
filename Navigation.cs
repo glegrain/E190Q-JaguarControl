@@ -904,11 +904,6 @@ namespace DrRobot.JaguarControl
             x_est = x_est_tot / numParticles;
             y_est = y_est_tot / numParticles;
             t_est = t_est_tot / numParticles;
-            //x = x_est;
-            //y = y_est;
-            //t = t_est;
-
-
 
             // ****************** Additional Student Code: End   ************
 
