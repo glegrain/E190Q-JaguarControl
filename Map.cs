@@ -156,7 +156,6 @@ namespace DrRobot.JaguarControl
             // ****************** Additional Student Code: Start   ************
 
             // Lab 4
-
             // d is the expected range measurement, or distance from the robot's position to the wall
             double d;
    
@@ -178,14 +177,8 @@ namespace DrRobot.JaguarControl
             double yIntersect = slopeRobot * xIntersect + interceptRobot; // find yIntersect from robot line path
 
             // Check if intersection is on the laser ray and not behind
-            if (t >= 0 && t < Math.PI / 2 && xIntersect > x && yIntersect > y);                // OK, upper right quadrant
-            else if (t >= Math.PI/2 && t < Math.PI && xIntersect < x && yIntersect > y);       // OK, upper left quadrant
-            else if (t <= 0 && t > - Math.PI / 2 && xIntersect > x && yIntersect < y);         // OK, bottom right quadrant
-            else if (t <= -Math.PI/2 && t > - Math.PI && xIntersect < x && yIntersect < y);    // OK, bottom left quadrant
-            else
-            {
-                return mapDiagonal;
-            }
+            double tIntercept = Math.Atan2(yIntersect - y, xIntersect - x);
+            if (angleDifference(tIntercept, t + 1.57) > 1 ) return mapDiagonal;
 
             bool isOutsideOfSegment = yIntersect < Math.Min(mapSegmentCorners[segment, 0, 1], mapSegmentCorners[segment, 1, 1]) ||
                                       yIntersect > Math.Max(mapSegmentCorners[segment, 0, 1], mapSegmentCorners[segment, 1, 1]);
@@ -226,8 +219,6 @@ namespace DrRobot.JaguarControl
             {
                 // update minDist by either the previous or current value, depending on which is lower
                 minDist = Math.Min(minDist, GetWallDistance(x, y, t, i));
-
-                //Console.WriteLine("Min dist: " + minDist + " meters.");
             }
 
             // ****************** Additional Student Code: End   ************
@@ -261,6 +252,16 @@ namespace DrRobot.JaguarControl
             return dist;
         }
 
+        // get the shortest angle difference in radians
+        private double angleDifference(double source, double target)
+        {
+            double diff = (source - target) % (2 * Math.PI);
+            if (diff > Math.PI)
+                diff = diff - 2 * Math.PI;
+            else if (diff < -Math.PI)
+                diff = diff + 2 * Math.PI;
+            return diff;
+        }
 
 
 
