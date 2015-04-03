@@ -776,8 +776,8 @@ namespace DrRobot.JaguarControl
 
             // Calculate stdev for each encoder value before looping through particles
             // Change this coef. to change the spread. Experimental value from lab 2 with infinte nb of particle was 0.14
-            double stdevL = 0.5 * wheelDistanceL;
-            double stdevR = 0.5 * wheelDistanceR;
+            double stdevL = 0.2 * wheelDistanceL;
+            double stdevR = 0.2 * wheelDistanceR;
 
             // Don't try to localize if the robot is not moving
             if (distanceTravelled == 0 && angleTravelled == 0) return;
@@ -899,17 +899,19 @@ namespace DrRobot.JaguarControl
             double t_est_tot = 0;
 
             // Sum all particle state values
+            double totalWeight = 0;
             for (int i = 0; i < numParticles; ++i)
             {
-                x_est_tot = particles[i].x + x_est_tot;
-                y_est_tot = particles[i].y + y_est_tot;
-                t_est_tot = particles[i].t + t_est_tot;
+                x_est_tot = (particles[i].x) * particles[i].w + x_est_tot;
+                y_est_tot = (particles[i].y) * particles[i].w + y_est_tot;
+                t_est_tot = (particles[i].t) * particles[i].w + t_est_tot;
+                totalWeight += particles[i].w;
             }
 
             // Average all particle state values to get x_est, y_est, and t_est
-            x_est = x_est_tot / numParticles;
-            y_est = y_est_tot / numParticles;
-            t_est = t_est_tot / numParticles;
+            x_est = x_est_tot / totalWeight;
+            y_est = y_est_tot / totalWeight;
+            t_est = t_est_tot / totalWeight;
 
             // ****************** Additional Student Code: End   ************
 
