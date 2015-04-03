@@ -768,6 +768,7 @@ namespace DrRobot.JaguarControl
             // Edited in Lab 4
 
             double totalWeight = 0; // this is for the prediction step; sum of all particles' weights
+            double maxWeight = 0;
 
             /// Code from Lab 2: Odometry 
 
@@ -806,9 +807,10 @@ namespace DrRobot.JaguarControl
                 // 2) Calculate weight of particle
                 propagatedParticles[i].w = CalculateWeight(i);
                 totalWeight = totalWeight + propagatedParticles[i].w;
+                maxWeight = Math.Max(totalWeight, propagatedParticles[i].w);
 
                 // 3) Update set of particles with propagated particles
-                particles[i] = propagatedParticles[i].copy();
+                //particles[i] = propagatedParticles[i].copy();  // WHY IS THAT HERE???? Does not make sense to me
 
             }
 
@@ -831,48 +833,48 @@ namespace DrRobot.JaguarControl
             {
                 // normalize weights so we can compare them on a range of 0 to 1.0
                 // set weight to 0 when the weight of all particles if 0
-                double weight = (totalWeight > 0) ? particles[i].w / totalWeight: 0;
+                double weight = (maxWeight > 0) ? propagatedParticles[i].w / maxWeight: 0;
 
                 if (weight < 0.25) // add 1 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 0.5) // add 2 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 0.75) // add 3 copy
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 3rd copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
                 else if (weight < 1.0) // add 4 copies
                 {
                     // add 1st copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 2nd copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 3rd copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                     // add 4th copy
-                    tempParticles[numTempParticles] = particles[i].copy();
+                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
                     ++numTempParticles;
                 }
             }
@@ -917,25 +919,29 @@ namespace DrRobot.JaguarControl
 
         double CalculateWeight(int p)
         {
-	        // double weight = 0;
+	         double weight = 1;
 
 	        // ****************** Additional Student Code: Start ************
 
 	        // Put code here to calculated weight. Feel free to use the
 	        // function map.GetClosestWallDistance from Map.cs.
 
-            // particleDist is the distance from the particle to the closest wall
-            double particleDist = map.GetClosestWallDistance(propagatedParticles[p].x, propagatedParticles[p].y, propagatedParticles[p].t);
+            double particleDist, robotDist;
+            for (int i = 0; i < LaserData.Length; i=i+laserStepSize*8)
+            {
+                // particleDist is the distance from the particle to the closest wall
+                particleDist = map.GetClosestWallDistance(propagatedParticles[p].x, propagatedParticles[p].y, propagatedParticles[p].t -1.57 + laserAngles[i]);
+                // robotDist is the distance from the robot to the closest wall
+                robotDist = LaserData[i] / 1000;
+                if (robotDist == 6.00 || particleDist == 6.00) ; //weight *= 0.02;
+                else
+                {
+                    double value = GaussianFunction(particleDist, robotDist, 0.4);
+                    weight *= value;
+                }
+            }
 
-            // robotDist is the distance from the robot to the closest wall
-            double robotDist = LaserData[113] / 1000;
-
-            return GaussianFunction(particleDist, robotDist, 1 / (2 * Math.Pow(200, 2)));
-
-            //propagatedParticles[p].w = weight;
-
-            //return weight;
-
+            return weight;
         }
 
 
