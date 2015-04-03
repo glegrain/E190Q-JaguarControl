@@ -208,7 +208,7 @@ namespace DrRobot.JaguarControl
 
         public double GetClosestWallDistance(double x, double y, double t){
 
-            double minDist = 30.000; // Changed from 6 to 30 for debugging
+            double minDist = 6.000; // Changed from 6 to 30 for debugging
 
             // ****************** Additional Student Code: Start ************
 
