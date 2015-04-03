@@ -813,80 +813,86 @@ namespace DrRobot.JaguarControl
             }
 
             // CORRECTION STEP
+            if (newLaserData) {
+                // new array to hold temporary particles
+                // maximum size of tempParticles should be 4*numParticles
+                Particle[] tempParticles = new Particle[4 * numParticles];
 
-            // new array to hold temporary particles
-            // maximum size of tempParticles should be 4*numParticles
-            Particle[] tempParticles = new Particle[4 * numParticles];
+                // number of temporary particles
+                int numTempParticles = 0;
 
-            // number of temporary particles
-            int numTempParticles = 0;
+                // Check that we have new measurements before resampling
+                //if (distanceTravelled == 0 && angleTravelled == 0) return;
 
-            // Check that we have new measurements before resampling
-            //if (distanceTravelled == 0 && angleTravelled == 0) return;
-
-            // Resample particle using the approximate method
-            //if (distanceTravelled != 0 || angleTravelled != 0)
-            //{
-            for (int i = 0; i < numParticles; ++i)
-            {
-                // normalize weights so we can compare them on a range of 0 to 1.0
-                // set weight to 0 when the weight of all particles if 0
-                double weight = (maxWeight > 0) ? propagatedParticles[i].w / maxWeight: 0;
-
-                if (weight < 0.25) // add 1 copy
+                // Resample particle using the approximate method
+                //if (distanceTravelled != 0 || angleTravelled != 0)
+                //{
+                for (int i = 0; i < numParticles; ++i)
                 {
-                    // add 1st copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
+                    // normalize weights so we can compare them on a range of 0 to 1.0
+                    // set weight to 0 when the weight of all particles if 0
+                    double weight = (maxWeight > 0) ? propagatedParticles[i].w / maxWeight: 0;
+
+                    if (weight < 0.25) // add 1 copy
+                    {
+                        // add 1st copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                    }
+                    else if (weight < 0.5) // add 2 copy
+                    {
+                        // add 1st copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                        // add 2nd copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                    }
+                    else if (weight < 0.75) // add 3 copy
+                    {
+                        // add 1st copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                        // add 2nd copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                        // add 3rd copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                    }
+                    else if (weight <= 1.0) // add 4 copies
+                    {
+                        // add 1st copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                        // add 2nd copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                        // add 3rd copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                        // add 4th copy
+                        tempParticles[numTempParticles] = propagatedParticles[i].copy();
+                        ++numTempParticles;
+                    }
                 }
-                else if (weight < 0.5) // add 2 copy
+
+                // loop through the number of particles to resample from temporary particle list
+                for (int i = 0; i < numParticles; ++i)
                 {
-                    // add 1st copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
-                    // add 2nd copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
+                    // Note: fabiha is worried RandomGaussian() won't have enough resolution
+                    // tried to make RandomGaussian() go from 0 to 1, instead of -2 to 2
+                    // Guillaume wants to try with uniform
+                    int r = random.Next(0, numTempParticles - 1);
+                    particles[i] = tempParticles[r].copy();
+
+                    newLaserData = false;   
                 }
-                else if (weight < 0.75) // add 3 copy
-                {
-                    // add 1st copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
-                    // add 2nd copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
-                    // add 3rd copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
-                }
-                else if (weight <= 1.0) // add 4 copies
-                {
-                    // add 1st copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
-                    // add 2nd copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
-                    // add 3rd copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
-                    // add 4th copy
-                    tempParticles[numTempParticles] = propagatedParticles[i].copy();
-                    ++numTempParticles;
+            } else {
+                for (int i = 0; i < numParticles; ++i) {
+                    particles[i] = propagatedParticles[i].copy();
                 }
             }
-
-            // loop through the number of particles to resample from temporary particle list
-            for (int i = 0; i < numParticles; ++i)
-            {
-                // Note: fabiha is worried RandomGaussian() won't have enough resolution
-                // tried to make RandomGaussian() go from 0 to 1, instead of -2 to 2
-                // Guillaume wants to try with uniform
-                int r = random.Next(0, numTempParticles - 1);
-                particles[i] = tempParticles[r].copy();
-            }
-            //}
 
             double x_est_tot = 0;
             double y_est_tot = 0;
@@ -925,7 +931,7 @@ namespace DrRobot.JaguarControl
             // function map.GetClosestWallDistance from Map.cs.
 
             double particleDist, robotDist;
-            for (int i = 0; i < LaserData.Length; i=i+laserStepSize*12)
+            for (int i = 0; i < LaserData.Length; i=i+laserStepSize*9)
             {
                 // particleDist is the distance from the particle to the closest wall
                 particleDist = map.GetClosestWallDistance(propagatedParticles[p].x, propagatedParticles[p].y, propagatedParticles[p].t -1.57 + laserAngles[i]);
