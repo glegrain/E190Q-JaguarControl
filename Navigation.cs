@@ -758,21 +758,9 @@ namespace DrRobot.JaguarControl
 
             // ****************** Additional Student Code: Start ************
 
-            // Put code here to calculate x_est, y_est, t_est using a PF
-
-            //x_est = 0; y_est = 0; t_est = 0; // This was in the base code. Why?
-            // Put code here to calculate x_est, y_est, t_est using a PF
-
-            //x = x_est; y = y_est; t = t_est;
-
             // Edited in Lab 4
 
-            double maxWeight = 0; // this is for the prediction step; sum of all particles' weights
-
-            /// Code from Lab 2: Odometry 
-
-            // Loop and propagate all particles
-            // QUESTION: DO WE ADD RANDOMNESS OR ASSUME RANDOMNESS AS WE PROPAGATE?
+            double maxWeight = 0; // this is for the prediction step; sum of all particles' weights 
 
             // Calculate stdev for each encoder value before looping through particles
             // Change this coef. to change the spread. Experimental value from lab 2 with infinte nb of particle was 0.14
@@ -782,12 +770,13 @@ namespace DrRobot.JaguarControl
             // Don't try to localize if the robot is not moving
             if (distanceTravelled == 0 && angleTravelled == 0) return;
             
+            //PREDICTION STEP
+            // Loop and propagate all particles
             for (int i = 0; i < numParticles; ++i)
             {
-                //PREDICTION STEP
-
                 // 1) Calculate estimated states x_est, y_est, t_test based on odometry
 
+                /// using code from Lab 2: Odometry with added randomness
                 // Distance traveled by each wheel (since the encoders have 190 counts/rev)
                 double randDistanceL = wheelDistanceL + RandomGaussian(0, stdevL);
                 double randDistanceR = wheelDistanceR + RandomGaussian(0, stdevR);
@@ -796,20 +785,16 @@ namespace DrRobot.JaguarControl
                 double randDistanceTravelled = (randDistanceL + randDistanceR) / 2;
 
                 // Angle traveled is difference in distances traveled by each wheel / 2*L
-                // Angle traveled should be within -pi and pi
                 double randAngleTravelled = -(randDistanceL - randDistanceR) / (2 * robotRadius);
 
                 propagatedParticles[i].x = particles[i].x + randDistanceTravelled * Math.Cos(particles[i].t + randAngleTravelled / 2);
                 propagatedParticles[i].y = particles[i].y + randDistanceTravelled * Math.Sin(particles[i].t + randAngleTravelled / 2);
                 propagatedParticles[i].t = particles[i].t + randAngleTravelled;
 
-
-                // 3) Update set of particles with propagated particles
-                //particles[i] = propagatedParticles[i].copy();  // WHY IS THAT HERE???? Does not make sense to me
-
             }
 
             // CORRECTION STEP
+            // Only correct when there is new sensor data
             if (newLaserData) {
                 // new array to hold temporary particles
                 // maximum size of tempParticles should be 4*numParticles
@@ -818,12 +803,6 @@ namespace DrRobot.JaguarControl
                 // number of temporary particles
                 int numTempParticles = 0;
 
-                // Check that we have new measurements before resampling
-                //if (distanceTravelled == 0 && angleTravelled == 0) return;
-
-                // Resample particle using the approximate method
-                //if (distanceTravelled != 0 || angleTravelled != 0)
-                //{
                 for (int i = 0; i < numParticles; ++i)
                 {
 
@@ -879,17 +858,16 @@ namespace DrRobot.JaguarControl
                     }
                 }
 
-                // loop through the number of particles to resample from temporary particle list
+                // loop through the number of particles to resample randomly from temporary particle list
                 for (int i = 0; i < numParticles; ++i)
                 {
-                    // Note: fabiha is worried RandomGaussian() won't have enough resolution
-                    // tried to make RandomGaussian() go from 0 to 1, instead of -2 to 2
-                    // Guillaume wants to try with uniform
                     int r = random.Next(0, numTempParticles - 1);
                     particles[i] = tempParticles[r].copy();
 
                     newLaserData = false;   
                 }
+            // When there is no new sensor data, particles are just propagated using 
+            // the prediction step (odometry)
             } else {
                 for (int i = 0; i < numParticles; ++i) {
                     particles[i] = propagatedParticles[i].copy();
@@ -901,6 +879,8 @@ namespace DrRobot.JaguarControl
             double t_est_tot = 0;
 
             // Sum all particle state values
+            // NOTE: weighted average provides a better state estimation when the particles
+            // are spread apart (vs. unweighted average).
             double totalWeight = 0;
             for (int i = 0; i < numParticles; ++i)
             {
