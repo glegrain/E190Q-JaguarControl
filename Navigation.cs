@@ -306,7 +306,7 @@ namespace DrRobot.JaguarControl
                     }
 
                     // Drive the robot to a desired Point (lab 3)
-                  //  FlyToSetPoint();
+                    //FlyToSetPoint();
 
                     // Follow the trajectory instead of a desired point (lab 3)
                     TrackTrajectory();
@@ -593,9 +593,9 @@ namespace DrRobot.JaguarControl
 
             // Part 1: Transform to new coordinate system
 
-            double deltaX = desiredX - x_est;
-            double deltaY = desiredY - y_est;
-            double theta = t_est - 0; // theta is the current heading relative to 0
+            double deltaX = x_des - x_est;
+            double deltaY = y_des - y_est;
+            double theta = t_des - 0; // theta is the current heading relative to 0
 
             // clean deltaX and deltaY to remove oscillations
             // yhis will ignore the delta overshoot between two function call
@@ -637,24 +637,24 @@ namespace DrRobot.JaguarControl
             desiredRotRateL = (short)(pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV + desiredW * robotRadius)); // enc. pulses / sec
             desiredRotRateR = (short)(pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV - desiredW * robotRadius)); // enc. pulses / sec
 
-            //// Limit wheel velocities to maxVelocity (0.25 m/s)
-            //short maxRotRate = (short)(3 * maxVelocity * pulsesPerRotation / (2 * Math.PI * wheelRadius)); // 0.25 * 190/(2pi * 0.089) = 84 enc. pulses / sec
-            //int rotDirL = (desiredRotRateL >= 0) ? 1 : -1;
-            //int rotDirR = (desiredRotRateR >= 0) ? 1 : -1;
-            //double rotRatio = Math.Abs(desiredRotRateL / (double)desiredRotRateR);
-            //if (Math.Abs(desiredRotRateR) > maxRotRate || Math.Abs(desiredRotRateL) > maxRotRate)
-            //{
-            //    if (rotRatio > 1)
-            //    {
-            //        desiredRotRateL = (short)(rotDirL * maxRotRate);
-            //        desiredRotRateR = (short)(rotDirR * maxRotRate / rotRatio);
-            //    }
-            //    else
-            //    {
-            //        desiredRotRateR = (short)(rotDirR * maxRotRate);
-            //        desiredRotRateL = (short)(rotDirL * maxRotRate * rotRatio);
-            //    }
-            //}
+            // Limit wheel velocities to maxVelocity (0.25 m/s)
+            short maxRotRate = (short)(3 * maxVelocity * pulsesPerRotation / (2 * Math.PI * wheelRadius)); // 0.25 * 190/(2pi * 0.089) = 84 enc. pulses / sec
+            int rotDirL = (desiredRotRateL >= 0) ? 1 : -1;
+            int rotDirR = (desiredRotRateR >= 0) ? 1 : -1;
+            double rotRatio = Math.Abs(desiredRotRateL / (double)desiredRotRateR);
+            if (Math.Abs(desiredRotRateR) > maxRotRate || Math.Abs(desiredRotRateL) > maxRotRate)
+            {
+               if (rotRatio > 1)
+               {
+                   desiredRotRateL = (short)(rotDirL * maxRotRate);
+                   desiredRotRateR = (short)(rotDirR * maxRotRate / rotRatio);
+               }
+               else
+               {
+                   desiredRotRateR = (short)(rotDirR * maxRotRate);
+                   desiredRotRateL = (short)(rotDirL * maxRotRate * rotRatio);
+               }
+            }
 
             //fix for oscillations when arrived at destination
             if (pho < 0.1 && Math.Abs(angleDifference(theta, desiredT)) < 0.02)
@@ -743,8 +743,8 @@ namespace DrRobot.JaguarControl
                 Node randExpansionNode = NodesInCells[occupiedCellsList[randCellNumber], randNodeNumber];
 
                 // Randomly Generate new Node c' from c
-                double randDistance = random.NextDouble(); // to be tuned
-                double randOrientation = 2*Math.PI * random.NextDouble(); // 0 to 2pi
+                double randDistance = random.NextDouble() * 3; // to be tuned
+                double randOrientation = 2*Math.PI * random.NextDouble() - Math.PI; // -pi to pi
 
                 double newX = randExpansionNode.x + randDistance*Math.Cos(randOrientation);
                 double newY = randExpansionNode.y + randDistance*Math.Sin(randOrientation);
@@ -928,7 +928,7 @@ namespace DrRobot.JaguarControl
 
             // Angle traveled is difference in distances traveled by each wheel / 2*L
             // Angle traveled should be within -pi and pi
-            angleTravelled = -(wheelDistanceL - wheelDistanceR) / (2 * robotRadius);
+            angleTravelled = (wheelDistanceL - wheelDistanceR) / (2 * robotRadius);
 
             // Calculate estimated states x_est, y_est, t_test
             x = x + distanceTravelled * Math.Cos(t + angleTravelled / 2);
@@ -1032,7 +1032,7 @@ namespace DrRobot.JaguarControl
 
                 // Angle traveled is difference in distances traveled by each wheel / 2*L
                 // Angle traveled should be within -pi and pi
-                double randAngleTravelled = -(randDistanceL - randDistanceR) / (2 * robotRadius);
+                double randAngleTravelled = (randDistanceL - randDistanceR) / (2 * robotRadius);
 
                 propagatedParticles[i].x = particles[i].x + randDistanceTravelled * Math.Cos(particles[i].t + randAngleTravelled / 2);
                 propagatedParticles[i].y = particles[i].y + randDistanceTravelled * Math.Sin(particles[i].t + randAngleTravelled / 2);
