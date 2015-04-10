@@ -13,6 +13,7 @@ namespace DrRobot.JaguarControl
         private double[] slopes;
         private double[] segmentSizes;
         private double[] intercepts;
+        private double mapDiagonal;
 
         private double minWorkspaceX = -10;
         private double maxWorkspaceX =  10;
@@ -30,6 +31,7 @@ namespace DrRobot.JaguarControl
 	
 	        // Change hard code here to change map:
 
+            numMapSegments = 16;
 	        numMapSegments = 8;
             mapSegmentCorners = new double[numMapSegments, 2, 2];
             slopes = new double[numMapSegments];
@@ -75,12 +77,54 @@ namespace DrRobot.JaguarControl
             mapSegmentCorners[7, 0, 1] = -2.74 - 2.31;
             mapSegmentCorners[7, 1, 0] = -5.03/2;
             mapSegmentCorners[7, 1, 1] = -2.74 - 2.31;
+
+            mapSegmentCorners[8, 0, 0] = 5.03 / 2;
+            mapSegmentCorners[8, 0, 1] = -2.74 - 2.31;
+            mapSegmentCorners[8, 1, 0] = 5.03/2;
+            mapSegmentCorners[8, 1, 1] = -2.74 - 2.31 - 5;
+ 
+            mapSegmentCorners[9, 0, 0] = -5.03 / 2;
+            mapSegmentCorners[9, 0, 1] = -2.74 - 2.31;
+            mapSegmentCorners[9, 1, 0] = -5.03/2;
+            mapSegmentCorners[9, 1, 1] = -2.74 - 2.31 - 5;
+ 
+ 
+            mapSegmentCorners[10, 0, 0] =  3.55 / 2 + 3.05;
+            mapSegmentCorners[10, 0, 1] = -2.74;
+            mapSegmentCorners[10, 1, 0] =  3.55 / 2 + 3.05;
+            mapSegmentCorners[10, 1, 1] = -2.74 - 2.31 - 5.5;
+ 
+            mapSegmentCorners[11, 0, 0] = -3.55 / 2 - 3.05;
+            mapSegmentCorners[11, 0, 1] = -2.74;
+            mapSegmentCorners[11, 1, 0] = -3.55 / 2 - 3.05;
+            mapSegmentCorners[11, 1, 1] = -2.74 - 2.31 - 5.5;
+ 
+            mapSegmentCorners[12, 0, 0] =  3.55 / 2 + 5.79;
+            mapSegmentCorners[12, 0, 1] =  0;
+            mapSegmentCorners[12, 1, 0] =  3.55 / 2 + 5.79;
+            mapSegmentCorners[12, 1, 1] = -2.74 - 2.31 - 5.5;
+ 
+            mapSegmentCorners[13, 0, 0] = -3.55 / 2 - 5.79;
+            mapSegmentCorners[13, 0, 1] =  0;
+            mapSegmentCorners[13, 1, 0] = -3.55 / 2 - 5.79;
+            mapSegmentCorners[13, 1, 1] = -2.74 - 2.31 - 5.5;
+ 
+            mapSegmentCorners[14, 0, 0] =  3.38 + 5.79 + 3.55 / 2;
+            mapSegmentCorners[14, 0, 1] =  2.794;
+            mapSegmentCorners[14, 1, 0] =  3.38 + 5.79 + 3.55 / 2;
+            mapSegmentCorners[14, 1, 1] = -2.74 - 2.31 - 5.5;
+ 
+            mapSegmentCorners[15, 0, 0] = -3.38 - 5.79 - 3.55 / 2;
+            mapSegmentCorners[15, 0, 1] =  2.794;
+            mapSegmentCorners[15, 1, 0] = -3.38 - 5.79 - 3.55 / 2;
+            mapSegmentCorners[15, 1, 1] = -2.74 - 2.31 - 5.5;
             // ****************** Additional Student Code: End   ************
 
 
 	        // Set map parameters
 	        // These will be useful in your future coding.
 	        minX = 9999; minY = 9999; maxX=-9999; maxY=-9999;
+            mapDiagonal = Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2));
 	        for (int i=0; i< numMapSegments; i++){
 		
 		        // Set extreme values
@@ -126,7 +170,11 @@ namespace DrRobot.JaguarControl
 	        // Put code here that loops through segments, calling the
 	        // function GetWallDistance.
 
-
+            for (int i = 0; i < numMapSegments; i++)
+            {
+                // update minDist by either the previous or current value, depending on which is lower
+                minDist = Math.Min(minDist, GetWallDistance(x, y, t, i));
+            }
 
 	        // ****************** Additional Student Code: End   ************
 
@@ -226,6 +274,16 @@ namespace DrRobot.JaguarControl
         }
 
 
+        // get the shortest angle difference in radians
+        private double angleDifference(double source, double target)
+        {
+            double diff = (source - target) % (2 * Math.PI);
+            if (diff > Math.PI)
+                diff = diff - 2 * Math.PI;
+            else if (diff < -Math.PI)
+                diff = diff + 2 * Math.PI;
+            return diff;
+        }
 
 
 
