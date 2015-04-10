@@ -13,7 +13,6 @@ namespace DrRobot.JaguarControl
         private double[] slopes;
         private double[] segmentSizes;
         private double[] intercepts;
-        private double mapDiagonal;
 
         private double minWorkspaceX = -10;
         private double maxWorkspaceX =  10;
@@ -124,7 +123,6 @@ namespace DrRobot.JaguarControl
 	        // Set map parameters
 	        // These will be useful in your future coding.
 	        minX = 9999; minY = 9999; maxX=-9999; maxY=-9999;
-            mapDiagonal = Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxY, 2));
 	        for (int i=0; i< numMapSegments; i++){
 		
 		        // Set extreme values
@@ -274,16 +272,6 @@ namespace DrRobot.JaguarControl
         }
 
 
-        // get the shortest angle difference in radians
-        private double angleDifference(double source, double target)
-        {
-            double diff = (source - target) % (2 * Math.PI);
-            if (diff > Math.PI)
-                diff = diff - 2 * Math.PI;
-            else if (diff < -Math.PI)
-                diff = diff + 2 * Math.PI;
-            return diff;
-        }
 
 
 
