@@ -61,6 +61,7 @@ namespace DrRobot.JaguarControl
         private static Pen wallPen = new Pen(Brushes.LightGray, 4);
         private static Pen particlePen = new Pen(Brushes.Red, 1);
         private static Pen estimatePen = new Pen(Brushes.Blue, 2);
+        private static Pen laserPen = new Pen(Color.FromArgb(128, 128, 128, 128), 1); // created in Lab 4 to draw lines from particles to walls
         private static double cellWidth = 1.0; // in meters, mapResolution is in metersToPixels
         #endregion
 
@@ -315,6 +316,15 @@ namespace DrRobot.JaguarControl
                         (float)(xCenter + mapResolution * navigation.map.mapSegmentCorners[w, 1, 0]),
                         (float)(yCenter - mapResolution * navigation.map.mapSegmentCorners[w, 1, 1]));
 
+                }
+
+                // Draw center laser scan measurements. Something is not working right now.
+                for (int i = 0; i < navigation.LaserData.Length; i = i + 3) {
+                    double distanceToWall = navigation.LaserData[i] / (double) 1000; // central laser range convert back to meters
+                    double xFromRobot = distanceToWall * Math.Cos(navigation.t -1.57 + navigation.laserAngles[i]);
+                    double yFromRobot = distanceToWall * Math.Sin(navigation.t -1.57 + navigation.laserAngles[i]);
+                    g.DrawLine(laserPen, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y),
+                                         (int) (xCenter + mapResolution * (navigation.x + xFromRobot)), (int) (yCenter - mapResolution * (navigation.y + yFromRobot)));
                 }
 
                 // Draw Particles
