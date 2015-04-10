@@ -195,7 +195,7 @@ namespace DrRobot.JaguarControl
             t = 0;//initialT;
 
             // Initialize state estimates
-            x_est = 0;//initialX;
+            x_est = 0 ;//initialX;
             y_est = 0;//initialY;
             t_est = 0;//initialT;
 
@@ -290,7 +290,7 @@ namespace DrRobot.JaguarControl
                 LocalizeRealWithOdometry();
 
                 // Estimate the global state of the robot -x_est, y_est, t_est (lab 4)
-                LocalizeEstWithParticleFilter();
+                //LocalizeEstWithParticleFilter();
 
 
                 // If using the point tracker, call the function
@@ -306,7 +306,7 @@ namespace DrRobot.JaguarControl
                     }
 
                     // Drive the robot to a desired Point (lab 3)
-                    //FlyToSetPoint();
+                  //  FlyToSetPoint();
 
                     // Follow the trajectory instead of a desired point (lab 3)
                     TrackTrajectory();
@@ -637,24 +637,24 @@ namespace DrRobot.JaguarControl
             desiredRotRateL = (short)(pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV + desiredW * robotRadius)); // enc. pulses / sec
             desiredRotRateR = (short)(pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV - desiredW * robotRadius)); // enc. pulses / sec
 
-            // Limit wheel velocities to maxVelocity (0.25 m/s)
-            short maxRotRate = (short)(3 * maxVelocity * pulsesPerRotation / (2 * Math.PI * wheelRadius)); // 0.25 * 190/(2pi * 0.089) = 84 enc. pulses / sec
-            int rotDirL = (desiredRotRateL >= 0) ? 1 : -1;
-            int rotDirR = (desiredRotRateR >= 0) ? 1 : -1;
-            double rotRatio = Math.Abs(desiredRotRateL / (double)desiredRotRateR);
-            if (Math.Abs(desiredRotRateR) > maxRotRate || Math.Abs(desiredRotRateL) > maxRotRate)
-            {
-                if (rotRatio > 1)
-                {
-                    desiredRotRateL = (short)(rotDirL * maxRotRate);
-                    desiredRotRateR = (short)(rotDirR * maxRotRate / rotRatio);
-                }
-                else
-                {
-                    desiredRotRateR = (short)(rotDirR * maxRotRate);
-                    desiredRotRateL = (short)(rotDirL * maxRotRate * rotRatio);
-                }
-            }
+            //// Limit wheel velocities to maxVelocity (0.25 m/s)
+            //short maxRotRate = (short)(3 * maxVelocity * pulsesPerRotation / (2 * Math.PI * wheelRadius)); // 0.25 * 190/(2pi * 0.089) = 84 enc. pulses / sec
+            //int rotDirL = (desiredRotRateL >= 0) ? 1 : -1;
+            //int rotDirR = (desiredRotRateR >= 0) ? 1 : -1;
+            //double rotRatio = Math.Abs(desiredRotRateL / (double)desiredRotRateR);
+            //if (Math.Abs(desiredRotRateR) > maxRotRate || Math.Abs(desiredRotRateL) > maxRotRate)
+            //{
+            //    if (rotRatio > 1)
+            //    {
+            //        desiredRotRateL = (short)(rotDirL * maxRotRate);
+            //        desiredRotRateR = (short)(rotDirR * maxRotRate / rotRatio);
+            //    }
+            //    else
+            //    {
+            //        desiredRotRateR = (short)(rotDirR * maxRotRate);
+            //        desiredRotRateL = (short)(rotDirL * maxRotRate * rotRatio);
+            //    }
+            //}
 
             //fix for oscillations when arrived at destination
             if (pho < 0.1 && Math.Abs(angleDifference(theta, desiredT)) < 0.02)
@@ -719,10 +719,11 @@ namespace DrRobot.JaguarControl
 
 
             // Create and add the start Node
-
+            Node startNode = new Node(x_est, y_est, 0, 0);
+            AddNode(startNode);
 
             // Create the goal node
-
+            Node goalNode = new Node(desiredX, desiredY, 0, 0);
 
             // Loop until path created
             bool pathFound = false;
@@ -735,8 +736,38 @@ namespace DrRobot.JaguarControl
 
             while (iterations < maxIterations && !pathFound)
             {
-
+                int randCellNumber = random.Next(0, numOccupiedCells);
+                int randNodeNumber = random.Next(0, numNodesInCell[occupiedCellsList[randCellNumber]]);
                 
+                // Randomly Select New Node c to expand
+                Node randExpansionNode = NodesInCells[occupiedCellsList[randCellNumber], randNodeNumber];
+
+                // Randomly Generate new Node c' from c
+                double randDistance = random.NextDouble(); // to be tuned
+                double randOrientation = 2*Math.PI * random.NextDouble(); // 0 to 2pi
+
+                double newX = randExpansionNode.x + randDistance*Math.Cos(randOrientation);
+                double newY = randExpansionNode.y + randDistance*Math.Sin(randOrientation);
+
+                Node newNode = new Node(newX, newY, numNodes, randExpansionNode.nodeIndex);
+
+                // If edge e from c to c' is collision-free
+                    // Add (c', e) to R
+                    // If c' belongs to endgame region, return path
+
+                if (!map.CollisionFound(randExpansionNode, newNode, robotRadius))
+                {
+                    AddNode(newNode);
+
+                    //Return if stopping criteria is met
+                    if (!map.CollisionFound(newNode, goalNode, robotRadius))
+                    {
+                        goalNode.nodeIndex = numNodes;
+                        goalNode.lastNode = randExpansionNode.nodeIndex;
+                        AddNode(goalNode);
+                        pathFound = true;
+                    }
+                }
 
                 // Increment number of iterations
                 iterations++;
@@ -744,8 +775,8 @@ namespace DrRobot.JaguarControl
 
 
             // Create the trajectory to follow
-            //BuildTraj(goalNode);
-
+            BuildTraj(goalNode);
+             
             
             // ****************** Additional Student Code: End   ************
 
@@ -934,9 +965,12 @@ namespace DrRobot.JaguarControl
             // Update the actual
             // Lab 2 Code
 
-            x = x_est;
-            y = y_est;
-            t = t_est;
+            //x = x_est;
+            //y = y_est;
+            //t = t_est;
+            x_est = x;
+            y_est = y;
+            t_est = t;
     
             // ****************** Additional Student Code: End   ************
         }
@@ -1148,7 +1182,7 @@ namespace DrRobot.JaguarControl
         // with the particle.
         // This function should calculate the weight associated with particle p.
 
-        void CalculateWeight(int p)
+        double CalculateWeight(int p)
         {
 
             double weight = 1;
