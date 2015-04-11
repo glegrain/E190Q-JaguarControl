@@ -595,7 +595,7 @@ namespace DrRobot.JaguarControl
 
             double deltaX = x_des - x_est;
             double deltaY = y_des - y_est;
-            double theta = t_des - 0; // theta is the current heading relative to 0
+            double theta = t_est - 0; // theta is the current heading relative to 0
 
             // clean deltaX and deltaY to remove oscillations
             // yhis will ignore the delta overshoot between two function call
@@ -731,7 +731,7 @@ namespace DrRobot.JaguarControl
             int iterations = 0;
             Random randGenerator = new Random();
 
-
+            
             
 
             while (iterations < maxIterations && !pathFound)
