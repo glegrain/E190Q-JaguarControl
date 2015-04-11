@@ -622,7 +622,7 @@ namespace DrRobot.JaguarControl
 
             // angle to move at goal
             double beta = angleDifference(-theta, alpha);
-            beta = angleDifference(beta, -desiredT);
+            beta = angleDifference(beta, -t_des); // LAB 5: CHANGED desiredT to t_des
 
             // Part 2: Calculate Desired Wheel Velocities
 
@@ -632,7 +632,7 @@ namespace DrRobot.JaguarControl
 
             // fix for in-place rotation
             //if (Math.Abs(Math.Abs(theta) - Math.Abs(alpha)) < 0.1) desiredW = -Kbeta/2.5 * desiredT; // Kbeta < 0
-            if (pho < 0.1) desiredW = -2 * angleDifference(theta, desiredT); // experiental coef
+            if (pho < 0.1) desiredW = -2 * angleDifference(theta, t_des); // experiental coef // LAB 5: CHANGED desiredT to t_des
 
             desiredRotRateL = (short)(pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV + desiredW * robotRadius)); // enc. pulses / sec
             desiredRotRateR = (short)(pulsesPerRotation / (2 * Math.PI * wheelRadius) * (desiredV - desiredW * robotRadius)); // enc. pulses / sec
@@ -657,7 +657,7 @@ namespace DrRobot.JaguarControl
             }
 
             //fix for oscillations when arrived at destination
-            if (pho < 0.1 && Math.Abs(angleDifference(theta, desiredT)) < 0.02)
+            if (pho < 0.1 && Math.Abs(angleDifference(theta, t_des)) < 0.02) // LAB 5: CHANGED desiredT to t_des
             {
                 //desiredRotRateL = (desiredRotRateL < 1) ? (short) 0 : desiredRotRateL;
                 //desiredRotRateR = (desiredRotRateR < 1) ? (short) 0 : desiredRotRateR;
@@ -743,7 +743,7 @@ namespace DrRobot.JaguarControl
                 Node randExpansionNode = NodesInCells[occupiedCellsList[randCellNumber], randNodeNumber];
 
                 // Randomly Generate new Node c' from c
-                double randDistance = random.NextDouble() * 3; // to be tuned
+                double randDistance = random.NextDouble(); // to be tuned
                 double randOrientation = 2*Math.PI * random.NextDouble() - Math.PI; // -pi to pi
 
                 double newX = randExpansionNode.x + randDistance*Math.Cos(randOrientation);
@@ -755,12 +755,12 @@ namespace DrRobot.JaguarControl
                     // Add (c', e) to R
                     // If c' belongs to endgame region, return path
 
-                if (!map.CollisionFound(randExpansionNode, newNode, robotRadius))
+                if (!map.CollisionFound(randExpansionNode, newNode, 3*robotRadius))
                 {
                     AddNode(newNode);
 
                     //Return if stopping criteria is met
-                    if (!map.CollisionFound(newNode, goalNode, robotRadius))
+                    if (!map.CollisionFound(newNode, goalNode, 3*robotRadius))
                     {
                         goalNode.nodeIndex = numNodes;
                         goalNode.lastNode = randExpansionNode.nodeIndex;
@@ -778,6 +778,7 @@ namespace DrRobot.JaguarControl
             BuildTraj(goalNode);
              
             
+
             // ****************** Additional Student Code: End   ************
 
 
