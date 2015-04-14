@@ -56,6 +56,13 @@ namespace DrRobot.JaguarControl
         double time = 0;
         DateTime startTime;
 
+        // IMU variables
+        DateTime prevTime;
+        double velocityX;
+        double velocityY;
+        double avgAccel_x;
+        int counter;
+
         public short K_P = 15;//15;
         public short K_I = 0;//0;
         public short K_D = 3;//3;
@@ -190,6 +197,7 @@ namespace DrRobot.JaguarControl
             GetFirstEncoderMeasurements();
             CalibrateIMU();
             Initialize();
+            counter = 0;
         }
         #endregion
 
@@ -230,11 +238,11 @@ namespace DrRobot.JaguarControl
                 //LocalizeRealWithOdometry();
 
                 // Update the global state of the robot - x,y,t (lab 2)
-                //LocalizeRealWithIMU();
+                LocalizeRealWithIMU();
                 
 
                 // Estimate the global state of the robot -x_est, y_est, t_est (lab 4)
-                LocalizeEstWithParticleFilter();
+                //LocalizeEstWithParticleFilter();
 
 
                 // If using the point tracker, call the function
@@ -302,6 +310,8 @@ namespace DrRobot.JaguarControl
             accCalib_x = accCalib_x / numMeasurements;
             accCalib_y = accCalib_y /numMeasurements;
 
+            double velocityX = 0;
+            double velocityY = 0;
 
         }
 
@@ -745,7 +755,27 @@ namespace DrRobot.JaguarControl
             // (i.e. using last x, y, t as well as angleTravelled and distanceTravelled).
             // Make sure t stays between pi and -pi
 
+            if (counter == 0) avgAccel_x = 0;
+            if (counter < 100)
+            {
+                counter++;
+                avgAccel_x += currentAccel_x;
+                return;
+            }
 
+            avgAccel_x = avgAccel_x / (double) 100;
+            counter = 0;
+
+            Console.WriteLine("avgAccel_x: " + avgAccel_x);
+            // DateTime currentTime = DateTime.Now;
+            // double deltaTime = (currentTime - prevTime).TotalSeconds;
+            // prevTime = currentTime;
+
+            // velocityX += currentAccel_x * deltaTime;
+            // velocityY += currentAccel_y * deltaTime;
+
+            // x_est += velocityX / deltaTime;
+            // y_est += velocityY / deltaTime;
             // ****************** Additional Student Code: End   ************
         }
 
