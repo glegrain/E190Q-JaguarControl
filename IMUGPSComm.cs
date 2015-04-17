@@ -131,7 +131,36 @@ namespace DrRobot.JaguarControl
         {
             return imuRecord.accel_z;
         }
+        
+        public double getGyro_x()
+        {
+            return imuRecord.gyro_x;
+        }
 
+        public double getGyro_y()
+        {
+            return imuRecord.gyro_y;
+        }
+
+        public double getGyro_z()
+        {
+            return imuRecord.gyro_z;
+        }
+
+        public double getMagn_x()
+        {
+            return imuRecord.magn_x;
+        }
+
+        public double getMagn_y()
+        {
+            return imuRecord.magn_y;
+        }
+
+        public double getMagn_z()
+        {
+            return imuRecord.magn_z;
+        }
         private void startComm()
         {
             int remotePortGPS = jaguarSetting.GPSPort;

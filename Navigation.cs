@@ -23,6 +23,9 @@ namespace DrRobot.JaguarControl
         public double currentAccel_x, currentAccel_y, currentAccel_z;
         public double lastAccel_x, lastAccel_y, lastAccel_z;
         public double currentGyro_x, currentGyro_y, currentGyro_z;
+        public double lastGyro_x, lastGyro_y, lastGyro_z;
+        public double currentMagn_x, currentMagn_y, currentMagn_z;
+        public double lastMagn_x, lastMagn_y, lastMagn_z;
         public double last_v_x, last_v_y;
         public double filteredAcc_x, filteredAcc_y;
 
@@ -60,8 +63,16 @@ namespace DrRobot.JaguarControl
         DateTime prevTime;
         double velocityX;
         double velocityY;
-        double avgAccel_x;
-        int counter;
+        double avgAccel_x = 0;
+        double avgAccel_y = 0;
+        double avgAccel_z = 0;
+        double avgGyro_x = 0;
+        double avgGyro_y = 0;
+        double avgGyro_z = 0;
+        double avgMagn_x = 0;
+        double avgMagn_y = 0;
+        double avgMagn_z = 0;
+        int avgIMUcounter;
 
         public short K_P = 15;//15;
         public short K_I = 0;//0;
@@ -78,6 +89,16 @@ namespace DrRobot.JaguarControl
 
         public double accCalib_x = 18;
         public double accCalib_y = 4;
+        public double accCalib_z = 0;
+        
+        public double gyrCalib_x = 0;
+        public double gyrCalib_y = 0;
+        public double gyrCalib_z = 0;
+            
+        public double magCalib_x = 0;
+        public double magCalib_y = 0;
+        public double magCalib_z = 0;
+
 
         // PF Variables
         public Map map;
@@ -197,7 +218,7 @@ namespace DrRobot.JaguarControl
             GetFirstEncoderMeasurements();
             CalibrateIMU();
             Initialize();
-            counter = 0;
+            avgIMUcounter = 0;
         }
         #endregion
 
@@ -242,7 +263,7 @@ namespace DrRobot.JaguarControl
                 
 
                 // Estimate the global state of the robot -x_est, y_est, t_est (lab 4)
-                //LocalizeEstWithParticleFilter();
+                LocalizeEstWithParticleFilter();
 
 
                 // If using the point tracker, call the function
@@ -299,16 +320,44 @@ namespace DrRobot.JaguarControl
 
             accCalib_x = 0;
             accCalib_y = 0;
+            //accCalib_z = 0;
+           
+            //gyrCalib_x = 0;
+            //gyrCalib_y = 0;
+            //gyrCalib_z = 0;
+            
+            //magCalib_x = 0;
+            //magCalib_y = 0;
+            //magCalib_z = 0;
+
             int numMeasurements = 100;
             for (int i = 0; i < numMeasurements; i++)
             {
                 accCalib_x += currentAccel_x;
                 accCalib_y += currentAccel_y;
+                //accCalib_z += currentAccel_z;
+
+                //gyrCalib_x += currentGyro_x;
+                //gyrCalib_y += currentGyro_y;
+                //gyrCalib_z += currentGyro_z;
+
+                //magCalib_x += currentMagn_x;
+                //magCalib_y += currentMagn_y;
+                //magCalib_z += currentMagn_z;
 
                 Thread.Sleep(deltaT);
             }
             accCalib_x = accCalib_x / numMeasurements;
-            accCalib_y = accCalib_y /numMeasurements;
+            accCalib_y = accCalib_y / numMeasurements;
+            //accCalib_z = accCalib_z / numMeasurements;
+
+            //gyrCalib_x = gyrCalib_x / numMeasurements;
+            //gyrCalib_y = gyrCalib_y / numMeasurements;
+            //gyrCalib_z = gyrCalib_z / numMeasurements;
+
+            //magCalib_x = magCalib_x / numMeasurements;
+            //magCalib_y = magCalib_y / numMeasurements;
+            //magCalib_z = magCalib_z / numMeasurements;
 
             double velocityX = 0;
             double velocityY = 0;
@@ -335,12 +384,30 @@ namespace DrRobot.JaguarControl
                         lastEncoderPulseR = currentEncoderPulseR;
                         gotFirstEncoder = true;
 
-                        currentAccel_x = jaguarControl.getAccel_x();
-                        currentAccel_y = jaguarControl.getAccel_y();
-                        currentAccel_z = jaguarControl.getAccel_z();
                         lastAccel_x = currentAccel_x;
                         lastAccel_y = currentAccel_y;
-                        lastAccel_z = currentAccel_z;
+                        //lastAccel_z = currentAccel_z;
+
+                        //lastGyro_x = currentGyro_x;
+                        //lastGyro_y = currentGyro_y;
+                        //lastGyro_z = currentGyro_z;
+
+                        lastMagn_x = currentMagn_x;
+                        lastMagn_y = currentMagn_y;
+                        //lastMagn_z = currentMagn_z;
+
+                        currentAccel_x = jaguarControl.getAccel_x();
+                        currentAccel_y = jaguarControl.getAccel_y();
+                        //currentAccel_z = jaguarControl.getAccel_z();
+
+                        //currentGyro_x = jaguarControl.getGyro_x();
+                        //currentGyro_y = jaguarControl.getGyro_y();
+                        //currentGyro_z = jaguarControl.getGyro_z();
+
+                        currentMagn_x = jaguarControl.getMagn_x();
+                        currentMagn_y = jaguarControl.getMagn_y();
+                        //currentMagn_z = jaguarControl.getMagn_z();
+
                         last_v_x = 0;
                         last_v_y = 0;
 
@@ -358,7 +425,8 @@ namespace DrRobot.JaguarControl
                 lastEncoderPulseR = 0;
                 lastAccel_x = 0;
                 lastAccel_y = 0;
-                lastAccel_z = 0;
+                //lastAccel_z = 0;
+                currentMagn_z = 0;
                 last_v_x = 0;
                 last_v_y = 0;
 
@@ -401,6 +469,8 @@ namespace DrRobot.JaguarControl
                     currentAccel_x = jaguarControl.getAccel_x();
                     currentAccel_y = jaguarControl.getAccel_y();
                     currentAccel_z = jaguarControl.getAccel_z();
+                    currentMagn_x = (jaguarControl.getMagn_x() != 0) ? jaguarControl.getMagn_x() : currentMagn_x;
+                    currentMagn_y = (jaguarControl.getMagn_y() != 0) ? jaguarControl.getMagn_y() : currentMagn_y;
                    
                     // Update Encoder Measurements
                     currentEncoderPulseL = jaguarControl.realJaguar.GetEncoderPulse4();
@@ -411,6 +481,17 @@ namespace DrRobot.JaguarControl
                 {
                 }
             }
+        }
+
+        // COMPETITION FUNCTION FOR MAGNETOMETER
+        public double getMagDirection(double x, double y)
+        {
+            return Math.Atan2(y, x);
+            //if (y > 0) return 90 - Math.Atan(x / y) * 180 / Math.PI;
+            //else if (y < 0) return 270 - Math.Atan(x / y) * Math.PI;
+            //else if (y == 0 && x < 0) return 180;
+            //else if (y == 0 && x > 0) return 0;
+            //else return 63;
         }
 
         // At every iteration of the control loop, this function calculates
@@ -755,18 +836,73 @@ namespace DrRobot.JaguarControl
             // (i.e. using last x, y, t as well as angleTravelled and distanceTravelled).
             // Make sure t stays between pi and -pi
 
-            if (counter == 0) avgAccel_x = 0;
-            if (counter < 100)
+            // get heading from Magnetometer data
+            //t = getMagDirection(currentMagn_x, currentMagn_y) + 12 * Math.PI/180;
+            t = - (Math.Atan2(currentMagn_y, currentMagn_x) + 12 * Math.PI / 180);
+            //Console.WriteLine("getMagDirection: " + t * 180 / Math.PI);
+            //Console.WriteLine("CurrentMagn_x: " + currentMagn_x + " CurrentMagn_y: " + currentMagn_y);
+
+            // Keep angle of robot within -pi and pi
+            if (t >= Math.PI) // if angle is over pi
             {
-                counter++;
-                avgAccel_x += currentAccel_x;
-                return;
+                t = ((t % Math.PI) - Math.PI); //roll over to -pi to 0 range
+            }
+            if (t <= -Math.PI) // if angle is less than pi
+            {
+                t = ((t % Math.PI) + Math.PI); //roll over to 0 to pi range
             }
 
-            avgAccel_x = avgAccel_x / (double) 100;
-            counter = 0;
+            //Console.WriteLine("Magnetometer- x: " + currentMagn_x + " y: " + currentMagn_y + " heading: " + t * 180 / Math.PI);
 
-            Console.WriteLine("avgAccel_x: " + avgAccel_x);
+            //if (avgIMUcounter == 0)
+            //{
+            //    avgAccel_x = 0;
+            //    avgAccel_y = 0;
+            //    //avgAccel_z = 0;
+            //    //avgGyro_x = 0;
+            //    //avgGyro_y = 0;
+            //    //avgGyro_z = 0;
+            //    //avgMagn_x = 0;
+            //    //avgMagn_y = 0;
+            //    //avgMagn_z = 0;
+            //}
+
+            //if (avgIMUcounter < 50)
+            //{
+            //    avgIMUcounter++;
+            //    avgAccel_x += currentAccel_x;
+            //    avgAccel_y += currentAccel_y;
+            //    //avgAccel_z += currentAccel_z;
+            //    //avgGyro_x += currentGyro_x;
+            //    //avgGyro_y += currentGyro_y;
+            //    //avgGyro_z += currentGyro_z;
+            //    //avgMagn_x += currentMagn_x;
+            //    //avgMagn_y += currentMagn_y;
+            //    //avgMagn_z += currentMagn_z;
+
+            //    return;
+            //}
+
+            //avgAccel_x = (avgAccel_x) / (double)avgIMUcounter;
+            //avgAccel_y = (avgAccel_y) / (double)avgIMUcounter;
+            //avgAccel_z = (avgAccel_z) / (double)avgIMUcounter;
+            //avgGyro_x = (avgGyro_x) / (double)avgIMUcounter;
+            //avgGyro_y = (avgGyro_y) / (double)avgIMUcounter;
+            //avgGyro_z = (avgGyro_z) / (double)avgIMUcounter;
+            //avgMagn_x = (avgMagn_x) / (double)avgIMUcounter;
+            //avgMagn_y = (avgMagn_y) / (double)avgIMUcounter;
+            //avgMagn_z = (avgMagn_z) / (double)avgIMUcounter;
+           
+            avgIMUcounter = 0;
+
+            //Console.WriteLine("avgAccel_x: " + avgAccel_x + " avgAccel_y: " + avgAccel_y + " avgAccel_z: " + avgAccel_z);
+            //Console.WriteLine("avgGyro_x: " + avgGyro_x + " avgGyro_y: " + avgGyro_y + " avgGyro_z: " + avgGyro_z);
+            //Console.WriteLine("avgMagn_x: " + avgMagn_x + " avgMagn_y: " + avgMagn_y + " avgMagn_z: " + avgMagn_z);
+
+            //Console.WriteLine("accCalib_x: " + accCalib_x + " accCalib_y: " + accCalib_y + " accCalib_z: " + accCalib_z);
+            //Console.WriteLine("gyrCalib_x: " + gyrCalib_x + " gyrCalib_y: " + gyrCalib_y + " gyrCalib_z: " + gyrCalib_z);
+            //Console.WriteLine("magCalib_x: " + magCalib_x + " magCalib_y: " + magCalib_y + " magCalib_z: " + magCalib_z);
+
             // DateTime currentTime = DateTime.Now;
             // double deltaTime = (currentTime - prevTime).TotalSeconds;
             // prevTime = currentTime;
@@ -954,7 +1090,7 @@ namespace DrRobot.JaguarControl
                 if (robotDist == 6.00 || particleDist == 6.00 || LaserData[i] < 100) weight *= 0.01;
                 else
                 {
-                    double value = GaussianFunction(particleDist, robotDist, 0.2);
+                    double value = GaussianFunction(particleDist, robotDist, 0.2)+0.2 * GaussianFunction(t, t_est, 0.2);
                     weight *= value;
                 }
             }

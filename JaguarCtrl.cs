@@ -309,14 +309,14 @@ namespace DrRobot.JaguarControl
                 // Draw a test line too see how it works
                 //g.DrawLine(laserPen, (int) xCenter, (int) yCenter, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y));
 
-                // Draw center laser scan measurements. Something is not working right now.
-                for (int i = 0; i < navigation.LaserData.Length; i = i + 3) {
-                    double distanceToWall = navigation.LaserData[i] / (double) 1000; // central laser range convert back to meters
-                    double xFromRobot = distanceToWall * Math.Cos(navigation.t -1.57 + navigation.laserAngles[i]);
-                    double yFromRobot = distanceToWall * Math.Sin(navigation.t -1.57 + navigation.laserAngles[i]);
-                    g.DrawLine(laserPen, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y),
-                                         (int) (xCenter + mapResolution * (navigation.x + xFromRobot)), (int) (yCenter - mapResolution * (navigation.y + yFromRobot)));
-                }
+                //// Draw center laser scan measurements. Something is not working right now.
+                //for (int i = 0; i < navigation.LaserData.Length; i = i + 3) {
+                //    double distanceToWall = navigation.LaserData[i] / (double) 1000; // central laser range convert back to meters
+                //    double xFromRobot = distanceToWall * Math.Cos(navigation.t -1.57 + navigation.laserAngles[i]);
+                //    double yFromRobot = distanceToWall * Math.Sin(navigation.t -1.57 + navigation.laserAngles[i]);
+                //    g.DrawLine(laserPen, (int) (xCenter + mapResolution * navigation.x), (int) (yCenter - mapResolution * navigation.y),
+                //                         (int) (xCenter + mapResolution * (navigation.x + xFromRobot)), (int) (yCenter - mapResolution * (navigation.y + yFromRobot)));
+                //}
 
                 // Draw Particles
                 int partSize = (int)(0.16*mapResolution);
