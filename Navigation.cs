@@ -755,18 +755,19 @@ namespace DrRobot.JaguarControl
             // (i.e. using last x, y, t as well as angleTravelled and distanceTravelled).
             // Make sure t stays between pi and -pi
 
-            if (counter == 0) avgAccel_x = 0;
-            if (counter < 100)
+            t = - jaguarControl.getHeading() * Math.PI/180;
+
+            // Keep angle of robot within -pi and pi
+            if (t >= Math.PI) // if angle is over pi
             {
-                counter++;
-                avgAccel_x += currentAccel_x;
-                return;
+                t = (t % Math.PI) - Math.PI; //roll over to -pi to 0 range
+            }
+            if (t <= -Math.PI) // if angle is less than pi
+            {
+                t = (t % Math.PI) + Math.PI; //roll over to 0 to pi range
             }
 
-            avgAccel_x = avgAccel_x / (double) 100;
-            counter = 0;
-
-            Console.WriteLine("avgAccel_x: " + avgAccel_x);
+            //Console.WriteLine("avgAccel_x: " + avgAccel_x);
             // DateTime currentTime = DateTime.Now;
             // double deltaTime = (currentTime - prevTime).TotalSeconds;
             // prevTime = currentTime;
