@@ -132,7 +132,7 @@ namespace DrRobot.JaguarControl
 
         public class Node
         {
-            public double x, y;
+            public double x, y, t;
             public int lastNode;
             public int nodeIndex;
 
@@ -140,14 +140,16 @@ namespace DrRobot.JaguarControl
             {
                 x = 0;
                 y = 0;
+                t = 0;
                 lastNode = 0;
                 nodeIndex = 0;
             }
 
-            public Node(double _x, double _y, int _nodeIndex, int _lastNode)
+            public Node(double _x, double _y, double _t, int _nodeIndex, int _lastNode)
             {
                 x = _x;
                 y = _y;
+                t = _t;
                 nodeIndex = _nodeIndex;
                 lastNode = _lastNode;
             }
@@ -236,7 +238,7 @@ namespace DrRobot.JaguarControl
             trajList = new Node[maxNumNodes];
             nodeList = new Node[maxNumNodes];
             numNodes = 0;
-            trajList[0] = new Node(0, 0, 0, 0);
+            trajList[0] = new Node(0, 0, 0, 0, 0);
             trajSize = 0;
 
 
@@ -690,7 +692,7 @@ namespace DrRobot.JaguarControl
                 trajCurrentNode++;
                 x_des = trajList[trajCurrentNode].x;
                 y_des = trajList[trajCurrentNode].y;
-                t_des = 0;
+                t_des = trajList[trajCurrentNode].t;
             }
 
             FlyToSetPoint();
@@ -719,11 +721,11 @@ namespace DrRobot.JaguarControl
 
 
             // Create and add the start Node
-            Node startNode = new Node(x_est, y_est, 0, 0);
+            Node startNode = new Node(x_est, y_est, t_est, 0, 0); // starts at t_est
             AddNode(startNode);
 
             // Create the goal node
-            Node goalNode = new Node(desiredX, desiredY, 0, 0);
+            Node goalNode = new Node(desiredX, desiredY, desiredT, 0, 0); // ends at desiredT
 
             // Loop until path created
             bool pathFound = false;
@@ -743,13 +745,14 @@ namespace DrRobot.JaguarControl
                 Node randExpansionNode = NodesInCells[occupiedCellsList[randCellNumber], randNodeNumber];
 
                 // Randomly Generate new Node c' from c
-                double randDistance = random.NextDouble(); // to be tuned
+                double randDistance = random.NextDouble()*1; // to be tuned
                 double randOrientation = 2*Math.PI * random.NextDouble() - Math.PI; // -pi to pi
 
                 double newX = randExpansionNode.x + randDistance*Math.Cos(randOrientation);
                 double newY = randExpansionNode.y + randDistance*Math.Sin(randOrientation);
+                double newT = 0; // set to 0 for now but will be set in BuildTrajectory (when entire list has been determined)
 
-                Node newNode = new Node(newX, newY, numNodes, randExpansionNode.nodeIndex);
+                Node newNode = new Node(newX, newY, newT, numNodes, randExpansionNode.nodeIndex);
 
                 // If edge e from c to c' is collision-free
                     // Add (c', e) to R
@@ -840,7 +843,7 @@ namespace DrRobot.JaguarControl
         {
             Node[] tempList = new Node[maxNumNodes];
             for (int j = 0; j < maxNumNodes; j++)
-                trajList[j] = new Node(0, 0, 0, 0);
+                trajList[j] = new Node(0, 0, 0, 0, 0);
 
             tempList[0] = goalNode;
             int i = 1;
@@ -858,9 +861,29 @@ namespace DrRobot.JaguarControl
                 trajList[j] = tempList[i - j - 1];
             }
 
+          
             // Set size of trajectory and initialize node counter
             trajSize = i;
             trajCurrentNode = 0;
+
+            // Define t for all nodes
+            for (int k = 0; k < trajSize - 1; k++)
+            {
+                double t_temp = Math.Atan2(trajList[k + 1].y - trajList[k].y, trajList[k + 1].x - trajList[k].x);
+                
+                // Keep t_temp within -pi and pi
+                if (t_temp >= Math.PI) // if angle is over pi
+                {
+                    t_temp = (t_temp % Math.PI) - Math.PI; //roll over to -pi to 0 range
+                }
+                if (t_temp <= -Math.PI) // if angle is less than pi
+                {
+                    t_temp = (t_temp % Math.PI) + Math.PI; //roll over to 0 to pi range
+                }
+
+                trajList[k].t = t_temp;
+            }
+            trajList[trajSize].t = desiredT;
 
             return;
         }
