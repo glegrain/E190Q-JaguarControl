@@ -289,10 +289,10 @@ namespace DrRobot.JaguarControl
                 MotionPrediction();
 
                 // Update the global state of the robot - x,y,t (lab 2)
-                LocalizeRealWithOdometry();
+                //LocalizeRealWithOdometry();
 
-                // Estimate the global state of the robot -x_est, y_est, t_est (lab 4)
-                //LocalizeEstWithParticleFilter();
+                // Estimate the global state of the robot - x_est, y_est, t_est (lab 4)
+                LocalizeEstWithParticleFilter();
 
 
                 // If using the point tracker, call the function
