@@ -779,8 +779,7 @@ namespace DrRobot.JaguarControl
 
             // Create the trajectory to follow
             BuildTraj(goalNode);
-             
-            
+
 
             // ****************** Additional Student Code: End   ************
 
@@ -842,6 +841,7 @@ namespace DrRobot.JaguarControl
         void BuildTraj(Node goalNode)
         {
             Node[] tempList = new Node[maxNumNodes];
+            Node[] uncleanedList = new Node[maxNumNodes];
             for (int j = 0; j < maxNumNodes; j++)
                 trajList[j] = new Node(0, 0, 0, 0, 0);
 
@@ -856,14 +856,61 @@ namespace DrRobot.JaguarControl
             }
 
             // Reverse trajectory order
-            for (int j = 0; j < i; j++)
+            for (int j = 0; j < i; j++) // i is the number of elements
             {
-                trajList[j] = tempList[i - j - 1];
+                uncleanedList[j] = tempList[i - j - 1];
+                Console.WriteLine("old x: " + uncleanedList[j].x + "old y: " + uncleanedList[j].y);
             }
 
+            // index used to build trajList
+            int trajListIndex = 0;
+
+            // transfer starting position
+            trajList[trajListIndex] = uncleanedList[trajListIndex];
+
+            //for debugging
+            //Console.WriteLine(trajListIndex + " - start x: " + trajList[trajListIndex].x + "start y: " + trajList[trajListIndex].y);
+            
+            // set trajListIndex to 1 before loop
+            trajListIndex++; 
+
+            // CLEANS UP THE LIST; MODIFICATION AFTER LAB 5 CHECKOFF
+            // theoretically, this should be looped through multiple times to get the shortest path
+            // increment through every 2 points in uncleanedList
+            // start at m = 0 and end at m = i - 1 or m = i - 2
+            for (int m = 0; m < i - 2; m+=2)
+            {
+                // check for collisions between current and next, next point (m+2) in list
+                if (!map.CollisionFound(uncleanedList[m], uncleanedList[m + 2], robotRadius))
+                {
+                    //if no collision, add (m+2) point as next point in trajList
+                    trajList[trajListIndex] = uncleanedList[m + 2];
+                    // for debugging
+                    //Console.WriteLine(trajListIndex + " - x: " + trajList[trajListIndex].x + "y: " + trajList[trajListIndex].y);
+                    trajListIndex++; // increment by the number of points added to trajList
+                }
+                else
+                {
+                    // if there is a collision, the next 2 points in trajList are the (m+1) and (m+2) points
+                    trajList[trajListIndex] = uncleanedList[m + 1];
+                    trajList[trajListIndex + 1] = uncleanedList[m + 2];
+
+                    //for debugging
+                    //Console.WriteLine(trajListIndex + " - x: " + trajList[trajListIndex].x + "y: " + trajList[trajListIndex].y);
+                    //Console.WriteLine((trajListIndex+1) + " - x: " + trajList[trajListIndex + 1].x + "y: " + trajList[trajListIndex + 1].y);
+
+                    trajListIndex += 2; // increment by the number of points added to trajList
+                }
+            }
+
+            // set end point
+            trajList[trajListIndex] = uncleanedList[i - 1];
+
+            //for debugging
+            //Console.WriteLine(trajListIndex + " - end x: " + trajList[trajListIndex].x + "end y: " + trajList[trajListIndex].y);
           
             // Set size of trajectory and initialize node counter
-            trajSize = i;
+            trajSize = trajListIndex;
             trajCurrentNode = 0;
 
             // Define t for all nodes
@@ -887,10 +934,6 @@ namespace DrRobot.JaguarControl
 
             return;
         }
-
-
- 
-
 
         #endregion
 
